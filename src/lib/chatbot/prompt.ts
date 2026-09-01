@@ -6,12 +6,16 @@ import { EMPRESA } from "@/lib/site";
  * El cerebro del asistente vive en Git, no en un textarea del panel.
  * Se cambia aquí, se revisa en el diff y se despliega.
  *
- * El widget se llama "Pregúntanos" / "Asistente de Neotérmica".
- * NO se llama Andrea (ese es el bot de otro proyecto).
+ * Se llama Neo. Avatar: /images/neo_chatbot.png.
+ * Presentación fija: «Neo, tu asistente virtual de climatización».
+ * NO se llama Andrea (Furgocasa) ni Pregúntanos.
  */
 
-export const ASSISTANT_NAME = "Asistente de Neotérmica";
-export const ASSISTANT_UI_TITLE = "Pregúntanos";
+export const ASSISTANT_NAME = "Neo";
+export const ASSISTANT_PRESENTATION =
+  "Neo, tu asistente virtual de climatización";
+export const ASSISTANT_UI_TITLE = ASSISTANT_PRESENTATION;
+export const ASSISTANT_AVATAR = "/images/neo_chatbot.png";
 
 /** Modelo de calidad (chat y redactor). Sin `temperature` en la familia GPT-5.x. */
 export const CHAT_MODEL = "gpt-5.6-terra";
@@ -19,7 +23,8 @@ export const CHAT_MODEL = "gpt-5.6-terra";
 export const FAST_MODEL = "gpt-4o-mini";
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 
-export const SYSTEM_PROMPT = `Eres el asistente de Neotérmica, climatización en Murcia.
+export const SYSTEM_PROMPT = `Eres Neo, tu asistente virtual de climatización de Neotérmica (Murcia).
+Cuando te presentas (primer saludo o si preguntan quién eres), di exactamente: «Neo, tu asistente virtual de climatización». No uses otro nombre. No te llames Andrea ni Pregúntanos.
 Fundador José Carlos Moya, 2012, +20 años, certificación Ministerio de Industria.
 Tel/WhatsApp ${EMPRESA.telefono}. Mail ${EMPRESA.email}. L–V 9:00–14:00 y 15:30–19:00.
 Murcia ciudad. NO tienes calle ni CP. No inventes un local.
@@ -75,4 +80,4 @@ El formulario pide texto (nombre, mail, tel, municipio, oficio, rango, mensaje).
 
 /** Mensaje de bienvenida del widget. */
 export const SALUDO =
-  "Hola. Pregúntame por instalación, avería o si llegamos a tu zona. Si ya lo tienes claro, [Pedir presupuesto](/contacto#formulario).";
+  "Hola, soy Neo, tu asistente virtual de climatización. Pregúntame por instalación, avería o si llegamos a tu zona. Si ya lo tienes claro, [Pedir presupuesto](/contacto#formulario).";

@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, Loader2, MessageCircle, RefreshCw, Send, X } from "lucide-react";
-import { ASSISTANT_NAME, ASSISTANT_UI_TITLE } from "@/lib/chatbot/prompt";
+import {
+  ASSISTANT_AVATAR,
+  ASSISTANT_NAME,
+  ASSISTANT_PRESENTATION,
+  ASSISTANT_UI_TITLE,
+  SALUDO,
+} from "@/lib/chatbot/prompt";
 import { EMPRESA } from "@/lib/site";
 import { aHtml } from "@/lib/chatbot/markdown";
 
@@ -13,8 +19,10 @@ import { aHtml } from "@/lib/chatbot/markdown";
  *   · Temas + preguntas preconfiguradas.
  *   · «Refrescar» empieza hilo nuevo en pantalla; el histórico queda en BD.
  *   · El hilo se conserva en sessionStorage + BD.
+ *   · En móvil el panel es pantalla completa (100dvh + visualViewport).
+ *   · En móvil no se enfoca el input al abrir (el teclado rompe el layout).
  *   · En móvil, un enlace interno minimiza el panel.
- * Flotante derecho. A la izquierda: volver arriba.
+ * Flotante derecho. A la izquierda: volver arriba (oculto si el chat está abierto).
  */
 
 type Turno = { role: "user" | "assistant"; content: string };
@@ -104,6 +112,7 @@ export default function ChatWidget() {
   const finRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     try {
@@ -138,12 +147,67 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!abierto) return;
     const caja = scrollRef.current;
-    if (caja) caja.scrollTop = caja.scrollHeight;
-    else finRef.current?.scrollIntoView({ block: "end" });
+    if (!caja) return;
+    if (mensajes.length === 0) {
+      caja.scrollTop = 0;
+      return;
+    }
+    caja.scrollTop = caja.scrollHeight;
   }, [mensajes, abierto, temaId]);
 
   useEffect(() => {
-    if (abierto) inputRef.current?.focus();
+    if (!abierto) return;
+    if (window.matchMedia("(min-width: 640px)").matches) {
+      inputRef.current?.focus();
+    }
+  }, [abierto]);
+
+  useEffect(() => {
+    if (!abierto) return;
+    const html = document.documentElement;
+    const prevOverflow = document.body.style.overflow;
+    html.classList.add("neo-chat-abierto");
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.classList.remove("neo-chat-abierto");
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [abierto]);
+
+  useEffect(() => {
+    if (!abierto) return;
+    const panel = panelRef.current;
+    const vv = window.visualViewport;
+    if (!panel || !vv) return;
+
+    const sync = () => {
+      if (window.matchMedia("(min-width: 640px)").matches) {
+        panel.style.height = "";
+        panel.style.top = "";
+        panel.style.left = "";
+        panel.style.right = "";
+        panel.style.width = "";
+        return;
+      }
+      panel.style.top = `${vv.offsetTop}px`;
+      panel.style.left = "0";
+      panel.style.right = "0";
+      panel.style.width = "100%";
+      panel.style.height = `${vv.height}px`;
+    };
+
+    sync();
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+      panel.style.height = "";
+      panel.style.top = "";
+      panel.style.left = "";
+      panel.style.right = "";
+      panel.style.width = "";
+    };
   }, [abierto]);
 
   useEffect(() => {
@@ -158,7 +222,7 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!abierto) return;
     const alClicar = (e: MouseEvent) => {
-      if (window.innerWidth >= 768) return;
+      if (window.innerWidth >= 640) return;
       const destino = (e.target as HTMLElement | null)?.closest("a");
       if (!destino) return;
       const href = destino.getAttribute("href") ?? "";
@@ -274,56 +338,74 @@ export default function ChatWidget() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setAbierto((v) => !v)}
-        aria-label={abierto ? "Cerrar el asistente" : `Abrir ${ASSISTANT_UI_TITLE}`}
-        aria-expanded={abierto}
-        className="fixed bottom-6 right-6 z-[2000] rounded-full p-4 text-white shadow-2xl transition-all duration-300 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        style={{ background: "var(--clima)" }}
-      >
-        {abierto ? <X className="h-7 w-7" aria-hidden /> : <MessageCircle className="h-7 w-7" aria-hidden />}
-      </button>
+      {!abierto && (
+        <button
+          type="button"
+          onClick={() => setAbierto(true)}
+          aria-label={`Abrir ${ASSISTANT_PRESENTATION}`}
+          aria-expanded={false}
+          className="fixed bottom-5 right-5 z-[2000] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-[background,transform] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          style={{ background: "var(--clima)" }}
+        >
+          <MessageCircle size={24} aria-hidden />
+        </button>
+      )}
 
       {abierto && (
         <section
+          ref={panelRef}
           role="dialog"
+          aria-modal="true"
           aria-label={ASSISTANT_UI_TITLE}
-          className="fixed inset-x-3 bottom-24 z-[2000] flex max-h-[min(64vh,440px)] w-auto flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:inset-x-auto md:right-6 md:h-[min(72vh,520px)] md:max-h-[min(72vh,520px)] md:w-[340px] md:max-w-[calc(100vw-3rem)]"
+          className="fixed inset-0 z-[2100] flex h-[100dvh] w-full flex-col overflow-hidden bg-white sm:inset-auto sm:bottom-24 sm:right-6 sm:h-auto sm:max-h-[min(85dvh,640px)] sm:w-[380px] sm:max-w-[calc(100vw-3rem)] sm:rounded-2xl sm:shadow-2xl"
         >
-          <header className="flex items-center gap-2 px-3 py-2.5 text-white" style={{ background: "var(--clima)" }}>
+          <header
+            className="flex shrink-0 items-center gap-2 px-3 py-2.5 pt-[max(0.6rem,env(safe-area-inset-top))] text-white"
+            style={{ background: "var(--clima)" }}
+          >
             <Image
-              src="/images/logo.png"
+              src={ASSISTANT_AVATAR}
               alt=""
-              width={36}
-              height={36}
-              className="h-9 w-9 rounded-full bg-white object-contain p-0.5 ring-2 ring-white/80"
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 rounded-full object-cover object-[32%_18%] ring-2 ring-white/80"
             />
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-[0.95rem] font-semibold leading-tight">{ASSISTANT_NAME}</h2>
-              <p className="text-[0.68rem] text-white/80">Suele responder al momento</p>
+              <p className="text-[0.68rem] leading-snug text-white/80">
+                tu asistente virtual de climatización
+              </p>
             </div>
             <button
               type="button"
               onClick={refrescar}
               disabled={cargando}
-              className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[0.7rem] text-white/90 transition-colors hover:bg-white/20 hover:text-white disabled:opacity-40"
+              className="flex h-10 items-center gap-1 rounded-full bg-white/10 px-2.5 text-[0.7rem] text-white/90 transition-colors hover:bg-white/20 hover:text-white disabled:opacity-40"
               aria-label="Empezar una conversación nueva"
               title="Empezar de nuevo (no borra el historial)"
             >
               <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-              Refrescar
+              <span className="hidden sm:inline">Refrescar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAbierto(false)}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              aria-label="Cerrar el asistente"
+            >
+              <X className="h-5 w-5" aria-hidden />
             </button>
           </header>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-[#EEF2F7] px-3 py-3">
+          <div
+            ref={scrollRef}
+            className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain bg-[#EEF2F7] px-3 py-3 sm:min-h-[320px] sm:max-h-[450px]"
+          >
             <div className="rounded-xl rounded-tl-md bg-white px-3 py-2.5 shadow-sm">
               <div
                 className="chat-markdown text-[0.8rem] leading-snug text-ink"
                 dangerouslySetInnerHTML={{
-                  __html: aHtml(
-                    "Hola. Pregúntame por instalación, reparación o mantenimiento en Murcia. Si ya lo tienes claro, [Pedir presupuesto](/contacto#formulario)."
-                  ),
+                  __html: aHtml(SALUDO),
                 }}
               />
             </div>
@@ -445,7 +527,7 @@ export default function ChatWidget() {
             <div ref={finRef} />
           </div>
 
-          <div className="border-t border-gray-200 bg-[#F0F0F0] px-2.5 py-2">
+          <div className="shrink-0 border-t border-gray-200 bg-[#F0F0F0] px-2.5 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -470,8 +552,9 @@ export default function ChatWidget() {
                 rows={1}
                 maxLength={2000}
                 autoComplete="off"
+                enterKeyHint="send"
                 placeholder="Escribe tu mensaje..."
-                className="min-w-0 flex-1 resize-none rounded-full border border-gray-300 px-3 py-2 text-[0.8rem] outline-none focus:ring-2 focus:ring-brand"
+                className="min-w-0 flex-1 resize-none rounded-full border border-gray-300 px-3 py-2 text-base outline-none focus:ring-2 focus:ring-brand sm:text-sm"
               />
               <button
                 type="submit"

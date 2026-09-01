@@ -667,3 +667,13 @@
   border-left: 3px solid theme("colors.accent.DEFAULT");
   color: theme("colors.mutedink");
 }
+
+/* Chat Neo abierto: no scrollear la web ni pintar el botón de volver arriba. */
+html.neo-chat-abierto,
+html.neo-chat-abierto body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+html.neo-chat-abierto .back-to-top {
+  display: none;
+}

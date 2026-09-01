@@ -34,7 +34,7 @@ En Windows, si `fetch` a OpenAI o Supabase falla por TLS (proxy Acttax): la mism
 | `/aviso-legal`, `/politica-de-privacidad`, `/politica-de-cookies`, `/accesibilidad` | Legal. |
 | `/administrator` | Taller: blog, contactos, CRM, chat (Respuestas + Conversaciones; nota del revisor). |
 
-Chat del visitante: **Pregúntanos** (no se llama Andrea). Prompt en `src/lib/chatbot/prompt.ts`. Modelo `gpt-5.6-terra`.
+Chat del visitante: **Neo** («Neo, tu asistente virtual de climatización»). Avatar `public/images/neo_chatbot.png`. Prompt en `src/lib/chatbot/prompt.ts`. Modelo `gpt-5.6-terra`.
 
 ---
 

@@ -24,7 +24,7 @@ export default function BackToTop() {
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Volver arriba"
-      className="fixed bottom-5 left-5 z-[100] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-[background,transform] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+      className="back-to-top fixed bottom-5 left-5 z-[100] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-[background,transform] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
       style={{ background: "var(--clima)" }}
     >
       <ArrowUp size={24} aria-hidden />
