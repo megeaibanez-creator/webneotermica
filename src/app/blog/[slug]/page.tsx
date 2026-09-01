@@ -9,6 +9,8 @@ import { EMPRESA, SITE_URL } from "@/lib/site";
 import BannerEstancias from "@/components/estancias/BannerEstancias";
 import CarruselPosts from "@/components/blog/CarruselPosts";
 
+export const dynamic = "force-dynamic";
+
 type Params = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {

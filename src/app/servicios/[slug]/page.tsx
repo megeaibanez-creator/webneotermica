@@ -16,6 +16,8 @@ function textoPlano(md: string) {
   return md.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\s+/g, " ").trim();
 }
 
+export const dynamic = "force-dynamic";
+
 type Params = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {

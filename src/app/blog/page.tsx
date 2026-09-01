@@ -4,6 +4,8 @@ import { fotoServicio } from "@/lib/images";
 import { getServicio } from "@/lib/servicios";
 import BlogIndice, { type PostListado } from "./BlogIndice";
 
+export const dynamic = "force-dynamic";
+
 const ETIQUETA: Record<string, string> = {
   "aire-acondicionado-splits": "Splits",
   "aire-acondicionado-conductos": "Conductos",

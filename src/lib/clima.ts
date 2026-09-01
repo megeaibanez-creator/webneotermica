@@ -63,8 +63,12 @@ export function applyClima(t: number) {
   root.style.setProperty("--clima", `rgb(${base[0]},${base[1]},${base[2]})`);
   root.style.setProperty("--clima-lite", `rgb(${lite[0]},${lite[1]},${lite[2]})`);
   root.style.setProperty("--clima-dark", `rgb(${dark[0]},${dark[1]},${dark[2]})`);
+}
+
+/** Guarda el tono. Llamar al soltar la rueda, no en cada pixel. */
+export function persistClima(t: number) {
   try {
-    sessionStorage.setItem(CLIMA_KEY, String(clamped));
+    sessionStorage.setItem(CLIMA_KEY, String(Math.min(1, Math.max(0, t))));
   } catch {
     // ignore
   }

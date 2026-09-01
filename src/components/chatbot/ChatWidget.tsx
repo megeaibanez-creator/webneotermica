@@ -301,7 +301,7 @@ export default function ChatWidget() {
         onClick={() => setAbierto((v) => !v)}
         aria-label={abierto ? "Cerrar el asistente" : `Abrir ${ASSISTANT_PRESENTATION}`}
         aria-expanded={abierto}
-        className="fixed bottom-5 right-5 z-[2000] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-[background,transform] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="fixed bottom-5 right-5 z-[2000] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-transform duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         style={{ background: "var(--clima)" }}
       >
         {abierto ? <X size={24} aria-hidden /> : <MessageCircle size={24} aria-hidden />}

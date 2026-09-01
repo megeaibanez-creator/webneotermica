@@ -3,6 +3,8 @@ import { SERVICIOS } from "@/lib/servicios";
 import { getPublishedPosts } from "@/lib/blog";
 import { SITE_URL } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Solo lo indexable: home, hub, 8 landings, blog y sus posts publicados, contacto.
  * Fuera: /administrator, /api y las páginas legales (noindex).

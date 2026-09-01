@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   applyClima,
+  persistClima,
   colorAt,
   CONFORT_DESDE,
   CONFORT_HASTA,
@@ -48,6 +49,7 @@ export default function Thermostat() {
   const [angle, setAngle] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  const tRef = useRef(1);
 
   useEffect(() => {
     const saved = restoreClima();
@@ -60,8 +62,10 @@ export default function Thermostat() {
 
   const pintar = useCallback((next: number) => {
     const a = wrap(next);
+    const nextT = tDeAngulo(a);
+    tRef.current = nextT;
     setAngle(a);
-    applyClima(tDeAngulo(a));
+    applyClima(nextT);
   }, []);
 
   const t = tDeAngulo(angle);
@@ -123,10 +127,21 @@ export default function Thermostat() {
         }}
         onPointerUp={() => {
           dragging.current = false;
+          persistClima(tRef.current);
+        }}
+        onPointerCancel={() => {
+          dragging.current = false;
+          persistClima(tRef.current);
         }}
         onKeyDown={(e) => {
-          if (e.key === "ArrowRight" || e.key === "ArrowUp") pintar(angle + 9);
-          if (e.key === "ArrowLeft" || e.key === "ArrowDown") pintar(angle - 9);
+          if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+            pintar(angle + 9);
+            persistClima(tRef.current);
+          }
+          if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+            pintar(angle - 9);
+            persistClima(tRef.current);
+          }
         }}
       >
         <span

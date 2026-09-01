@@ -11,6 +11,8 @@ import { getPublishedPosts } from "@/lib/blog";
 import { EMPRESA, RESENAS_GOOGLE } from "@/lib/site";
 import { IMG, MARCAS, fotoServicio } from "@/lib/images";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { absolute: "Climatización en Murcia | Neotérmica" },
   description:
@@ -47,7 +49,6 @@ export default async function HomePage() {
             <h1 className="mb-5 text-[clamp(2.2rem,5vw,3.7rem)] text-ink">
               Confía la{" "}
               <span
-                className="transition-colors duration-150"
                 style={{ color: "var(--clima)" }}
               >
                 temperatura

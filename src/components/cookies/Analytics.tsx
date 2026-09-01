@@ -20,8 +20,8 @@ export default function Analytics() {
     return () => window.removeEventListener(CONSENT_EVENT, onChange);
   }, []);
 
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
 
   if (!analyticsAllowed(consent, pathname)) return null;
   if (gtmId) return <GoogleTagManager gtmId={gtmId} />;

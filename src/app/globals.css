@@ -51,12 +51,14 @@
   }
 
   .btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-[0.95rem] font-display text-[0.9rem] font-semibold transition-all duration-300;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-[0.95rem] font-display text-[0.9rem] font-semibold transition-[transform,border-color,color] duration-300;
   }
   .btn-primary {
     @apply btn text-white hover:-translate-y-[3px];
     background: linear-gradient(135deg, var(--clima), var(--clima-lite));
     box-shadow: 0 12px 30px color-mix(in srgb, var(--clima) 34%, transparent);
+    /* El color lo pisa el termostato: si transiciona, va 300 ms por detrás de la rueda. */
+    transition-property: transform;
   }
   .btn-dark {
     @apply btn bg-ink text-white hover:bg-brand-dark;
@@ -66,7 +68,7 @@
   }
 
   .card {
-    @apply rounded-[20px] border border-line bg-white p-8 shadow-card transition-all duration-300;
+    @apply rounded-[20px] border border-line bg-white p-8 shadow-card transition-[transform,box-shadow] duration-300;
   }
   .card-hover {
     @apply hover:-translate-y-1.5 hover:shadow-deep;

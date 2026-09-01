@@ -38,8 +38,7 @@ if (!key) {
 const TEXT_MODEL = process.env.BLOG_COVER_TEXT_MODEL?.trim() || "gpt-5.6-terra";
 const TEXT_FALLBACK = "gpt-4o";
 const IMAGE_MODEL = process.env.BLOG_COVER_IMAGE_MODEL?.trim() || "gpt-image-2";
-const OUT_DIR = path.join(root, "public", "images", "blog");
-const FEED_PATH = path.join(OUT_DIR, "_feed.json");
+const FEED_PATH = path.join(root, ".data", "blog-cover-feed.json");
 const ESCENAS = ["habitacion", "tecnico", "equipo", "detalle"];
 
 const CLASIFICADOR = `Eres el director de arte del blog de Neotérmica, climatización en Murcia.
@@ -102,7 +101,7 @@ function cargarEnvFeed() {
 }
 
 function guardarFeed(feed) {
-  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.mkdirSync(path.dirname(FEED_PATH), { recursive: true });
   fs.writeFileSync(FEED_PATH, JSON.stringify(feed.slice(-40), null, 2));
 }
 
@@ -328,17 +327,14 @@ if (!posts.length) {
   process.exit(1);
 }
 
-fs.mkdirSync(OUT_DIR, { recursive: true });
 const feed = cargarEnvFeed();
 
 for (const post of posts) {
-  const dest = path.join(OUT_DIR, `${post.slug}.jpg`);
-  const rel = `/images/blog/${post.slug}.jpg`;
   if (!post.reescrito && !force) {
     console.log("— sin texto del agente (redact:blog primero):", post.slug);
     continue;
   }
-  if (!force && fs.existsSync(dest) && post.cover) {
+  if (!force && post.cover) {
     console.log("— ya tiene portada:", post.slug);
     continue;
   }
@@ -353,9 +349,9 @@ for (const post of posts) {
   const dos = dossier(post, recientes, escena.visual_idea);
   const prompts = await promptVisual(dos, escena.scene_type);
   const buf = await generarFoto(prompts.final);
-  fs.writeFileSync(dest, buf);
   const remota = await subirPortada(post.slug, buf);
-  const cover = remota || rel;
+  if (!remota) throw new Error(`No se pudo subir ${post.slug} a Storage`);
+  const cover = remota;
   feed.push({
     slug: post.slug,
     scene_type: escena.scene_type,
@@ -366,4 +362,4 @@ for (const post of posts) {
   console.log("  OK", cover, buf.length, "bytes");
 }
 
-console.log("\nHecho. Portadas en Storage (y copia local en public/images/blog/).");
+console.log("\nHecho. Portadas en Storage. Nada en Git.");

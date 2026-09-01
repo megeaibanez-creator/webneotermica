@@ -40,5 +40,6 @@ PROMPT_CLAUDE_FABLE5.txt
 /blog-actual/
 /08-definitiva.html
 /Untitled
-public/images/blog/_feed.json
+# Portadas del blog: solo Storage (bucket blog/covers). No commitear JPG.
+/public/images/blog/
 supabase/.temp/
