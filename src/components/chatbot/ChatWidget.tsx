@@ -19,7 +19,7 @@ import { aHtml } from "@/lib/chatbot/markdown";
  *   · Temas + preguntas preconfiguradas.
  *   · «Refrescar» empieza hilo nuevo en pantalla; el histórico queda en BD.
  *   · El hilo se conserva en sessionStorage + BD.
- *   · En móvil el panel es pantalla completa (100dvh + visualViewport).
+ *   · Tarjeta flotante (molde Andrea): no ocupa toda la pantalla.
  *   · En móvil no se enfoca el input al abrir (el teclado rompe el layout).
  *   · En móvil, un enlace interno minimiza el panel.
  * Flotante derecho. A la izquierda: volver arriba (oculto si el chat está abierto).
@@ -112,7 +112,6 @@ export default function ChatWidget() {
   const finRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const panelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     try {
@@ -165,49 +164,8 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!abierto) return;
     const html = document.documentElement;
-    const prevOverflow = document.body.style.overflow;
     html.classList.add("neo-chat-abierto");
-    document.body.style.overflow = "hidden";
-    return () => {
-      html.classList.remove("neo-chat-abierto");
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [abierto]);
-
-  useEffect(() => {
-    if (!abierto) return;
-    const panel = panelRef.current;
-    const vv = window.visualViewport;
-    if (!panel || !vv) return;
-
-    const sync = () => {
-      if (window.matchMedia("(min-width: 640px)").matches) {
-        panel.style.height = "";
-        panel.style.top = "";
-        panel.style.left = "";
-        panel.style.right = "";
-        panel.style.width = "";
-        return;
-      }
-      panel.style.top = `${vv.offsetTop}px`;
-      panel.style.left = "0";
-      panel.style.right = "0";
-      panel.style.width = "100%";
-      panel.style.height = `${vv.height}px`;
-    };
-
-    sync();
-    vv.addEventListener("resize", sync);
-    vv.addEventListener("scroll", sync);
-    return () => {
-      vv.removeEventListener("resize", sync);
-      vv.removeEventListener("scroll", sync);
-      panel.style.height = "";
-      panel.style.top = "";
-      panel.style.left = "";
-      panel.style.right = "";
-      panel.style.width = "";
-    };
+    return () => html.classList.remove("neo-chat-abierto");
   }, [abierto]);
 
   useEffect(() => {
@@ -338,29 +296,25 @@ export default function ChatWidget() {
 
   return (
     <>
-      {!abierto && (
-        <button
-          type="button"
-          onClick={() => setAbierto(true)}
-          aria-label={`Abrir ${ASSISTANT_PRESENTATION}`}
-          aria-expanded={false}
-          className="fixed bottom-5 right-5 z-[2000] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-[background,transform] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-          style={{ background: "var(--clima)" }}
-        >
-          <MessageCircle size={24} aria-hidden />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        aria-label={abierto ? "Cerrar el asistente" : `Abrir ${ASSISTANT_PRESENTATION}`}
+        aria-expanded={abierto}
+        className="fixed bottom-5 right-5 z-[2000] grid h-14 w-14 place-items-center rounded-full text-white shadow-deep transition-[background,transform] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        style={{ background: "var(--clima)" }}
+      >
+        {abierto ? <X size={24} aria-hidden /> : <MessageCircle size={24} aria-hidden />}
+      </button>
 
       {abierto && (
         <section
-          ref={panelRef}
           role="dialog"
-          aria-modal="true"
           aria-label={ASSISTANT_UI_TITLE}
-          className="fixed inset-0 z-[2100] flex h-[100dvh] w-full flex-col overflow-hidden bg-white sm:inset-auto sm:bottom-24 sm:right-6 sm:h-auto sm:max-h-[min(85dvh,640px)] sm:w-[380px] sm:max-w-[calc(100vw-3rem)] sm:rounded-2xl sm:shadow-2xl"
+          className="fixed bottom-24 right-5 z-[2000] flex w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
         >
           <header
-            className="flex shrink-0 items-center gap-2 px-3 py-2.5 pt-[max(0.6rem,env(safe-area-inset-top))] text-white"
+            className="flex shrink-0 items-center gap-2 px-3 py-2.5 text-white"
             style={{ background: "var(--clima)" }}
           >
             <Image
@@ -380,26 +334,18 @@ export default function ChatWidget() {
               type="button"
               onClick={refrescar}
               disabled={cargando}
-              className="flex h-10 items-center gap-1 rounded-full bg-white/10 px-2.5 text-[0.7rem] text-white/90 transition-colors hover:bg-white/20 hover:text-white disabled:opacity-40"
+              className="flex h-9 items-center gap-1 rounded-full bg-white/10 px-2.5 text-[0.7rem] text-white/90 transition-colors hover:bg-white/20 hover:text-white disabled:opacity-40"
               aria-label="Empezar una conversación nueva"
               title="Empezar de nuevo (no borra el historial)"
             >
               <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">Refrescar</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setAbierto(false)}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-              aria-label="Cerrar el asistente"
-            >
-              <X className="h-5 w-5" aria-hidden />
+              Refrescar
             </button>
           </header>
 
           <div
             ref={scrollRef}
-            className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain bg-[#EEF2F7] px-3 py-3 sm:min-h-[320px] sm:max-h-[450px]"
+            className="min-h-[280px] max-h-[min(58dvh,420px)] space-y-2 overflow-y-auto overscroll-contain bg-[#EEF2F7] px-3 py-3 sm:min-h-[320px] sm:max-h-[450px]"
           >
             <div className="rounded-xl rounded-tl-md bg-white px-3 py-2.5 shadow-sm">
               <div

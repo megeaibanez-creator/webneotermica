@@ -668,12 +668,7 @@
   color: theme("colors.mutedink");
 }
 
-/* Chat Neo abierto: no scrollear la web ni pintar el botón de volver arriba. */
-html.neo-chat-abierto,
-html.neo-chat-abierto body {
-  overflow: hidden;
-  overscroll-behavior: none;
-}
+/* Chat Neo abierto (tarjeta, molde Andrea): solo esconde el volver arriba. */
 html.neo-chat-abierto .back-to-top {
   display: none;
 }
