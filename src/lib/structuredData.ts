@@ -13,6 +13,8 @@ export function localBusinessJsonLd() {
     "@type": "HVACBusiness",
     "@id": `${SITE_URL}/#organizacion`,
     name: EMPRESA.nombre,
+    description:
+      "Empresa de climatización en Murcia: instalación, reparación y renovación.",
     url: SITE_URL,
     telephone: "+34678495046",
     email: EMPRESA.email,

@@ -57,13 +57,14 @@ Registros:
 - habitacion: estancia acabada de vivienda o local en Murcia (salón, dormitorio, oficina, cocina, baño) con el sistema YA instalado y visible de forma honesta.
 - tecnico: oficio real: manos, manómetros, anclaje, carga de gas, limpieza de filtros, no posado de catálogo.
 - equipo: máquina protagonista: unidad exterior, bomba de calor, caldera, colector, campana, placas en tejado si el artículo es solar.
-- detalle: still life a escala de mesa/manos: termostato, mando, filtro sucio, rejilla, tubería PEX, llave de radiador.
+- detalle: still life a escala de mesa/manos: termostato, mando, rejilla, tubería PEX, llave de radiador. Nunca filtros apelmazados de polvo.
 
 PROHIBIDO SIEMPRE:
 - Texto, logos, marcas (Daikin, Mitsubishi…), UI, collage, díptico, before/after, render 3D.
 - Pulpo de conductos flexibles, falso techo abierto, agujero en el techo mirando hacia arriba.
 - Sonrisa de stock mirando a cámara, hero de casco cromado.
 - Inventar un oficio que el artículo no trata (si habla de calderas, no pongas un split).
+- Filtros sucios como protagonista, pelusa apelmazada, aspiradora + filtros, «suciedad de catálogo».
 
 Si las 5 últimas están llenas de splits murales, NO elijas otro split. Devuelve SOLO el JSON.`;
 
@@ -223,7 +224,7 @@ async function subirPortada(slug, buf) {
     console.error("  Storage:", error.message);
     return null;
   }
-  const publicUrl = sb.storage.from("blog").getPublicUrl(dest).data.publicUrl;
+  const publicUrl = `${sb.storage.from("blog").getPublicUrl(dest).data.publicUrl}?v=${Date.now()}`;
   await sb
     .from("blog_articles")
     .update({ cover: publicUrl, updated_at: new Date().toISOString() })
@@ -317,7 +318,18 @@ async function leerPosts() {
 
 const args = process.argv.slice(2);
 const force = args.includes("--force");
-const filtro = args.filter((a) => a !== "--force");
+const ideaIdx = args.indexOf("--idea");
+const ideaForzada = ideaIdx >= 0 ? String(args[ideaIdx + 1] || "").trim() : "";
+const sceneIdx = args.indexOf("--scene");
+const sceneForzada = sceneIdx >= 0 ? String(args[sceneIdx + 1] || "").trim() : "";
+const filtro = args.filter(
+  (a, i) =>
+    a !== "--force" &&
+    a !== "--idea" &&
+    a !== "--scene" &&
+    i !== ideaIdx + 1 &&
+    i !== sceneIdx + 1,
+);
 
 const posts = (await leerPosts()).filter((p) =>
   filtro.length ? filtro.some((f) => p.slug.includes(f)) : true,
@@ -342,7 +354,13 @@ for (const post of posts) {
   console.log("\n===", post.slug);
   const recientes = feed.filter((f) => f.slug !== post.slug).slice(-5);
   const dos0 = dossier(post, recientes);
-  const escena = await clasificar(dos0);
+  const escena = ideaForzada
+    ? {
+        scene_type: ESCENAS.includes(sceneForzada) ? sceneForzada : "tecnico",
+        visual_idea: ideaForzada,
+        rationale: "idea forzada",
+      }
+    : await clasificar(dos0);
   console.log(`  registro: ${escena.scene_type} · ${escena.visual_idea}`);
   if (escena.rationale) console.log(`  por qué: ${escena.rationale}`);
 

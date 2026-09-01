@@ -14,12 +14,12 @@ import { IMG, MARCAS, fotoServicio } from "@/lib/images";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: { absolute: "Climatización en Murcia | Neotérmica" },
+  title: { absolute: "Neotérmica: tu empresa de climatización en Murcia" },
   description:
-    "Instalación, reparación y renovación de climatización en Murcia y 50 km a la redonda: aire acondicionado, aerotermia, suelo radiante, calderas, radiadores y ventilación. Más de 20 años de oficio.",
+    "Empresa de climatización en Murcia y 50 km: instalación, reparación y renovación de aire acondicionado, aerotermia, suelo radiante, calderas, radiadores y ventilación. Desde 2012.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Climatización en Murcia | Neotérmica",
+    title: "Neotérmica: tu empresa de climatización en Murcia",
     description:
       "Instalación, reparación y renovación de climatización en Murcia. Certificación del Ministerio de Industria. Desde 2012.",
     url: "/",
@@ -47,23 +47,20 @@ export default async function HomePage() {
               años · Murcia y 50 km
             </span>
             <h1 className="mb-5 text-[clamp(2.2rem,5vw,3.7rem)] text-ink">
-              Confía la{" "}
-              <span
-                style={{ color: "var(--clima)" }}
-              >
-                temperatura
+              Tu empresa de{" "}
+              <span style={{ color: "var(--clima)" }}>
+                climatización
                 <br />
-                de tu hogar o empresa
-              </span>{" "}
-              a
-              <br />
-              nuestros profesionales
+                en Murcia
+              </span>
             </h1>
+            <p className="mb-4 max-w-[40rem] text-[1.15rem] font-medium text-ink">
+              Confía la temperatura de tu hogar o empresa a nuestros profesionales.
+            </p>
             <p className="mb-8 max-w-[40rem] text-[1.1rem] text-mutedink">
-              En Neotérmica contamos con una larga trayectoria en la instalación de
-              todo tipo de herramientas para regular la temperatura de espacios de
-              trabajo y viviendas, ofreciendo un trabajo eficiente, puntual y seguro
-              con la Certificación del Ministerio de Industria.
+              Instalación, reparación y renovación en Murcia capital, pedanías y un
+              radio de unos 50 km. Más de 20 años de oficio y certificación del
+              Ministerio de Industria.
             </p>
             <div className="mb-7 flex flex-wrap gap-3">
               <Link href="#servicios" className="btn-primary">
