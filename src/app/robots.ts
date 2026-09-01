@@ -19,7 +19,7 @@ const IA_USER_AGENTS = [
   "meta-externalagent",
 ];
 
-const DISALLOW = ["/administrator", "/api", "/preview", "/draft"];
+const DISALLOW = ["/administrator", "/api", "/auth", "/preview", "/draft"];
 
 export default function robots(): MetadataRoute.Robots {
   return {

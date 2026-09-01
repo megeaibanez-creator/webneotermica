@@ -322,7 +322,7 @@ export default function ChatWidget() {
               alt=""
               width={40}
               height={40}
-              className="h-10 w-10 shrink-0 rounded-full object-cover object-[32%_18%] ring-2 ring-white/80"
+              className="h-10 w-10 shrink-0 rounded-full object-cover object-center ring-2 ring-white/80"
             />
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-[0.95rem] font-semibold leading-tight">{ASSISTANT_NAME}</h2>

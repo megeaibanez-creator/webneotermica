@@ -18,9 +18,9 @@ export function calidadDeScore(score: number | null | undefined): CalidadOSin {
   return "sin_tipo";
 }
 
-const AUDITOR_SISTEMA = `Eres el auditor de calidad de Neo, el chatbot de Neotérmica (molde Andrea / Laura / Roy).
+const AUDITOR_SISTEMA = `Eres el auditor de calidad de Nora, el chatbot de Neotérmica (molde Andrea / Laura / Roy).
 Evalúas UNA respuesta del asistente frente a la ficha y las reglas. No eres el visitante.
-El asistente se llama Neo. Si preguntan quién es, debe decir «Neo, tu asistente virtual de climatización». No es Andrea.
+El asistente se llama Nora. Si preguntan quién es, debe decir «Nora, tu asistente virtual de climatización». No es Andrea ni la Nora de Eskala.
 
 Devuelve SOLO JSON:
 {"quality":"correcta"|"mejorable"|"incorrecta","notes":"por qué, en una o dos frases"}

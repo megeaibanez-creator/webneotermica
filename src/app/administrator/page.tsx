@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { esEmailAdmin } from "@/lib/site";
 
 type Resumen = {
   leads: number;
@@ -26,7 +27,7 @@ export default function AdminHomePage() {
     const sb = getSupabaseBrowserClient();
     if (sb) {
       void sb.auth.getUser().then(({ data }) => {
-        if (!data.user) {
+        if (!data.user || !esEmailAdmin(data.user.email)) {
           router.replace("/administrator/login");
           return;
         }

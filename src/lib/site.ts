@@ -19,6 +19,14 @@ export const EMPRESA = {
   googlePerfil: "https://www.google.com/search?q=Neotermica&kgmid=/g/11wp53z0y2",
 } as const;
 
+/** Quién puede entrar en /administrator. Cualquier otro Auth (p. ej. Google ajeno) se echa. */
+export const ADMIN_EMAILS = ["megeaibanez@gmail.com"] as const;
+
+export function esEmailAdmin(email: string | null | undefined): boolean {
+  const n = email?.trim().toLowerCase();
+  return Boolean(n && (ADMIN_EMAILS as readonly string[]).includes(n));
+}
+
 /** Reseñas públicas de Google del perfil de Neotérmica. No usar Trustindex (mezcla una inmobiliaria). */
 export const RESENAS_GOOGLE = [
   {

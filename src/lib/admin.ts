@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { localDbActivo } from "@/lib/db/local";
+import { esEmailAdmin } from "@/lib/site";
 
 export function supabasePublicoConfigurado(): boolean {
   return Boolean(
@@ -23,7 +24,7 @@ export async function exigirAdmin(): Promise<NextResponse | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) {
+    if (!user || !esEmailAdmin(user.email)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
     return null;
