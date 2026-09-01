@@ -17,7 +17,12 @@ import {
   X,
 } from "lucide-react";
 
-const NAV = [
+const NAV: {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+}[] = [
   { href: "/administrator", label: "Panel", icon: LayoutDashboard, exact: true },
   { href: "/administrator/blog", label: "Blog", icon: FileText },
   { href: "/administrator/clientes", label: "Clientes", icon: UserRound },

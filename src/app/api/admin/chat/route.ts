@@ -14,7 +14,13 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Review = { id: string; message_id: string; score: number; notes?: string | null };
+type Review = {
+  id: string;
+  created_at: string;
+  message_id: string;
+  score: number;
+  notes?: string | null;
+};
 
 async function cargarTodo(): Promise<{
   threads: HiloChat[];

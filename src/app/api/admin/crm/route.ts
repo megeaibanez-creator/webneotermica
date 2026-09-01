@@ -200,6 +200,7 @@ async function convertirLead(leadId: string, snap: SnapshotCrm) {
   const supabase = getSupabaseAdmin();
   type Lead = {
     id: string;
+    created_at: string;
     name: string;
     email: string;
     phone: string | null;

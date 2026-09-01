@@ -33,7 +33,8 @@ export function preguntaAnterior(asistente: MsgChat, todos: MsgChat[]): string {
     );
   const idx = hilo.findIndex((m) => m.id === asistente.id);
   for (let i = idx - 1; i >= 0; i--) {
-    if (hilo[i]?.role === "user") return hilo[i].content;
+    const turno = hilo[i];
+    if (turno?.role === "user") return turno.content;
   }
   return "";
 }

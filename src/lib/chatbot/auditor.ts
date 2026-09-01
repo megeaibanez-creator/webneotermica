@@ -100,7 +100,13 @@ export async function auditarRespuesta(input: {
   }
 }
 
-type Review = { id: string; message_id: string; score: number; notes?: string | null };
+type Review = {
+  id: string;
+  created_at: string;
+  message_id: string;
+  score: number;
+  notes?: string | null;
+};
 
 export async function guardarNota(
   messageId: string,
