@@ -1,24 +1,19 @@
-import fs from "node:fs";
-import path from "node:path";
-import matter from "gray-matter";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Blog en ficheros: content/blog/{slug}.md con frontmatter.
+ * Blog = tabla `blog_articles` (molde Furgocasa: una fuente).
+ * El redactor y las portadas leen y escriben ahí. No hay carpeta de .md.
  *
- *   slug        · el MISMO de la WordPress (no romper enlaces)
+ *   slug        · el de la WordPress o el del lote nuevo (no romper enlaces)
  *   title
- *   date        · fecha de ALTA original, no el lastmod en bloque de jun 2025
+ *   date        · fecha de alta (los WP: original, no el lastmod de jun 2025)
  *   description
  *   status      · published | scheduled
- *   servicio    · (opcional) slug de la landing con la que enlaza
- *   cover       · portada IA (`/images/blog/{slug}.jpg`). La genera
- *                 scripts/generate-blog-covers.mjs (lee el post → prompt → gpt-image-2)
+ *   servicio    · (opcional) slug de la landing
+ *   cover       · URL pública del bucket `blog/covers`
  *
  * Listado público = status published y date <= hoy.
- *
- * Con Supabase (`.env.local`): home, /blog, fichas y landings leen
- * `blog_articles`. Los `.md` quedan para el redactor y el script de copia.
  */
 
 export type PostMeta = {
@@ -35,27 +30,6 @@ export type PostMeta = {
 
 export type Post = PostMeta & { content: string };
 
-const BLOG_DIR = path.join(process.cwd(), "content", "blog");
-
-function leerFichero(fileName: string): Post | null {
-  const full = path.join(BLOG_DIR, fileName);
-  const raw = fs.readFileSync(full, "utf8");
-  const { data, content } = matter(raw);
-  const slug = String(data.slug ?? fileName.replace(/\.md$/, ""));
-  if (!data.title || !data.date) return null;
-  return {
-    slug,
-    title: String(data.title),
-    date: new Date(data.date).toISOString().slice(0, 10),
-    description: String(data.description ?? ""),
-    status: data.status === "scheduled" ? "scheduled" : "published",
-    ...(data.servicio ? { servicio: String(data.servicio) } : {}),
-    ...(data.cover ? { cover: String(data.cover) } : {}),
-    ...(data.reescrito ? { reescrito: true } : {}),
-    content,
-  };
-}
-
 type FilaBlog = {
   slug: string;
   title: string;
@@ -67,6 +41,9 @@ type FilaBlog = {
   reescrito: boolean | null;
   content: string;
 };
+
+const COLUMNAS =
+  "slug,title,date,description,status,servicio,cover,reescrito,content";
 
 function filaAPost(f: FilaBlog): Post {
   return {
@@ -87,32 +64,27 @@ function publicadosDe(posts: Post[]): Post[] {
   return posts.filter((p) => p.status === "published" && p.date <= hoy);
 }
 
-/** Todos los ficheros. Origen del redactor y de `migrate-blog-articles`. */
-export function getAllPostsRaw(): Post[] {
-  if (!fs.existsSync(BLOG_DIR)) return [];
-  return fs
-    .readdirSync(BLOG_DIR)
-    .filter((f) => f.endsWith(".md"))
-    .map(leerFichero)
-    .filter((p): p is Post => p !== null)
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+export function requireBlogAdmin(): SupabaseClient {
+  const sb = getSupabaseAdmin();
+  if (!sb) {
+    throw new Error("Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY");
+  }
+  return sb;
 }
 
-/** Admin y listados: Supabase si hay keys; si no, los `.md`. */
+/** Admin y listados. Vacío si no hay Supabase. */
 export async function getAllPosts(): Promise<Post[]> {
   const sb = getSupabaseAdmin();
-  if (sb) {
-    const { data, error } = await sb
-      .from("blog_articles")
-      .select("slug,title,date,description,status,servicio,cover,reescrito,content")
-      .order("date", { ascending: false });
-    if (error) {
-      console.error("[blog] blog_articles:", error.message);
-      return getAllPostsRaw();
-    }
-    return ((data ?? []) as FilaBlog[]).map(filaAPost);
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("blog_articles")
+    .select(COLUMNAS)
+    .order("date", { ascending: false });
+  if (error) {
+    console.error("[blog] blog_articles:", error.message);
+    return [];
   }
-  return getAllPostsRaw();
+  return ((data ?? []) as FilaBlog[]).map(filaAPost);
 }
 
 /** Lo que ve el visitante: publicados con fecha de hoy o anterior. */
@@ -122,29 +94,22 @@ export async function getPublishedPosts(): Promise<Post[]> {
 
 export async function getPost(slug: string): Promise<Post | undefined> {
   const sb = getSupabaseAdmin();
-  if (sb) {
-    const { data, error } = await sb
-      .from("blog_articles")
-      .select("slug,title,date,description,status,servicio,cover,reescrito,content")
-      .eq("slug", slug)
-      .maybeSingle();
-    if (error) {
-      console.error("[blog] getPost:", error.message);
-    } else if (data) {
-      const post = filaAPost(data as FilaBlog);
-      const hoy = new Date().toISOString().slice(0, 10);
-      if (post.status === "published" && post.date <= hoy) return post;
-      return undefined;
-    }
+  if (!sb) return undefined;
+  const { data, error } = await sb.from("blog_articles").select(COLUMNAS).eq("slug", slug).maybeSingle();
+  if (error) {
+    console.error("[blog] getPost:", error.message);
+    return undefined;
   }
-  return publicadosDe(getAllPostsRaw()).find((p) => p.slug === slug);
+  if (!data) return undefined;
+  const post = filaAPost(data as FilaBlog);
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (post.status === "published" && post.date <= hoy) return post;
+  return undefined;
 }
 
 /** Posts relacionados con una landing de servicio. */
 export async function getPostsByServicio(servicio: string, limite = 3): Promise<Post[]> {
-  return (await getPublishedPosts())
-    .filter((p) => p.servicio === servicio)
-    .slice(0, limite);
+  return (await getPublishedPosts()).filter((p) => p.servicio === servicio).slice(0, limite);
 }
 
 export function formatFecha(iso: string): string {
@@ -153,4 +118,42 @@ export function formatFecha(iso: string): string {
     month: "long",
     year: "numeric",
   });
+}
+
+/** Slugs en la tabla (redactor / portadas). */
+export async function listBlogSlugs(): Promise<string[]> {
+  const sb = requireBlogAdmin();
+  const { data, error } = await sb.from("blog_articles").select("slug").order("slug");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => String((r as { slug: string }).slug));
+}
+
+/** Fila completa, también programada. Para el redactor. */
+export async function getArticleForRedactor(filtro: string): Promise<Post> {
+  const sb = requireBlogAdmin();
+  const { data, error } = await sb.from("blog_articles").select(COLUMNAS).eq("slug", filtro).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (data) return filaAPost(data as FilaBlog);
+
+  const slugs = await listBlogSlugs();
+  const hit = slugs.find((s) => s.includes(filtro));
+  if (!hit) throw new Error(`No hay artículo «${filtro}» en blog_articles`);
+  const otra = await sb.from("blog_articles").select(COLUMNAS).eq("slug", hit).maybeSingle();
+  if (otra.error) throw new Error(otra.error.message);
+  if (!otra.data) throw new Error(`No hay artículo «${filtro}» en blog_articles`);
+  return filaAPost(otra.data as FilaBlog);
+}
+
+export async function saveArticleBody(slug: string, content: string, description: string): Promise<void> {
+  const sb = requireBlogAdmin();
+  const { error } = await sb
+    .from("blog_articles")
+    .update({
+      content,
+      description,
+      reescrito: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("slug", slug);
+  if (error) throw new Error(error.message);
 }

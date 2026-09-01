@@ -1,19 +1,22 @@
 /**
  * AGENTE REDACTOR del blog Neotérmica.
  *
- * Molde ACTTAX / Eskala, adaptado a ficheros Markdown (no Supabase):
- *  1. Carga content/blog/{slug}.md
+ * Molde Furgocasa: lee y escribe `blog_articles` (no hay carpeta de .md).
+ *  1. Carga la fila por slug
  *  2. Pasada 1: Responses API + web_search (background)
  *  3. Pasada 2: Chat Completions (refinado, sin web)
  *  4. Metadatos SEO (excerpt = description)
- *  5. Guarda el .md. Conserva slug, fecha, status, servicio y cover.
+ *  5. UPDATE de content + description. Conserva slug, fecha, status, servicio y cover.
  *
  * Modelo: BLOG_REDACTOR_MODEL o gpt-5.6-terra.
  */
 
-import fs from "node:fs";
-import path from "node:path";
-import matter from "gray-matter";
+import {
+  getArticleForRedactor,
+  listBlogSlugs as listSlugsFromDb,
+  saveArticleBody,
+  type Post,
+} from "@/lib/blog";
 import {
   BLOG_REDACTOR_SYSTEM_PROMPT,
   BLOG_REFINE_PROMPT,
@@ -40,20 +43,6 @@ export type RedactResult = {
   warnings: string[];
 };
 
-type PostFile = {
-  full: string;
-  data: Record<string, unknown>;
-  slug: string;
-  title: string;
-  date: string;
-  description: string;
-  servicio: string;
-  cover: string;
-  reescrito: boolean;
-  content: string;
-};
-
-const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 const TEXT_FALLBACK = "gpt-4o";
 
 function getModel(): string {
@@ -89,37 +78,8 @@ export function extractSlug(input: string): string {
   return trimmed.replace(/\.md$/, "").split(/[\\/]/).pop() || trimmed;
 }
 
-export function listBlogSlugs(): string[] {
-  if (!fs.existsSync(BLOG_DIR)) return [];
-  return fs
-    .readdirSync(BLOG_DIR)
-    .filter((f) => f.endsWith(".md"))
-    .map((f) => f.replace(/\.md$/, ""))
-    .sort();
-}
-
-function loadPost(slug: string): PostFile {
-  const full = path.join(BLOG_DIR, `${slug}.md`);
-  if (!fs.existsSync(full)) {
-    const hit = fs
-      .readdirSync(BLOG_DIR)
-      .find((f) => f.endsWith(".md") && f.includes(slug));
-    if (!hit) throw new Error(`No hay artículo con slug «${slug}» en content/blog/`);
-    return loadPost(hit.replace(/\.md$/, ""));
-  }
-  const parsed = matter(fs.readFileSync(full, "utf8"));
-  return {
-    full,
-    data: { ...parsed.data },
-    slug: String(parsed.data.slug ?? slug),
-    title: String(parsed.data.title || slug),
-    date: String(parsed.data.date || ""),
-    description: String(parsed.data.description || ""),
-    servicio: parsed.data.servicio ? String(parsed.data.servicio) : "",
-    cover: parsed.data.cover ? String(parsed.data.cover) : "",
-    reescrito: Boolean(parsed.data.reescrito),
-    content: parsed.content,
-  };
+export async function listBlogSlugs(): Promise<string[]> {
+  return listSlugsFromDb();
 }
 
 function linksBrief(): string {
@@ -132,7 +92,7 @@ function linksBrief(): string {
   ].join("\n");
 }
 
-function editorialContext(post: PostFile, phase: "redaccion" | "verificacion"): string {
+function editorialContext(post: Post, phase: "redaccion" | "verificacion"): string {
   const year = new Date().getFullYear();
   const search =
     phase === "redaccion"
@@ -148,7 +108,7 @@ ${search}
 
 ${linksBrief()}
 
-### Texto actual (WordPress migrada; listas rotas)
+### Texto actual
 ${post.content}`;
 }
 
@@ -375,18 +335,8 @@ async function seoFields(
   };
 }
 
-function escribir(post: PostFile, cuerpo: string, description: string) {
-  const data: Record<string, unknown> = {
-    slug: post.slug,
-    title: post.title,
-    date: post.data.date ?? post.date,
-    description,
-    status: post.data.status ?? "published",
-  };
-  if (post.servicio) data.servicio = post.servicio;
-  if (post.cover) data.cover = post.cover;
-  data.reescrito = true;
-  fs.writeFileSync(post.full, matter.stringify(cuerpo.trim() + "\n", data));
+async function escribir(post: Post, cuerpo: string, description: string) {
+  await saveArticleBody(post.slug, cuerpo.trim() + "\n", description);
 }
 
 export async function redactBlogArticle(
@@ -397,7 +347,7 @@ export async function redactBlogArticle(
   const warnings: string[] = [];
   const slug = extractSlug(urlOrSlug);
   log(`Cargando ${slug}`);
-  const post = loadPost(slug);
+  const post = await getArticleForRedactor(slug);
   log(`   ${post.title}${post.servicio ? ` · ${post.servicio}` : ""}`);
 
   if (post.reescrito && !options.force && !options.seoOnly) {
@@ -467,7 +417,7 @@ export async function redactBlogArticle(
     };
   }
 
-  escribir(post, markdown, seo.meta_description);
+  await escribir(post, markdown, seo.meta_description);
   log(`Guardado · ${words} palabras`);
   return {
     slug: post.slug,
@@ -483,7 +433,7 @@ export async function redactBlogArticle(
 export async function redactAllPending(options: RedactOptions = {}): Promise<RedactResult[]> {
   const log = options.log ?? ((msg) => console.log(msg));
   const out: RedactResult[] = [];
-  for (const slug of listBlogSlugs()) {
+  for (const slug of await listBlogSlugs()) {
     log(`\n=== ${slug}`);
     out.push(await redactBlogArticle(slug, options));
   }

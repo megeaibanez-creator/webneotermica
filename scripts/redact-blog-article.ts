@@ -67,9 +67,8 @@ async function main() {
     process.exit(1);
   }
 
-  const slugs = all
-    ? listBlogSlugs()
-    : listBlogSlugs().filter((s) => filtros.some((f) => s.includes(f)));
+  const todos = await listBlogSlugs();
+  const slugs = all ? todos : todos.filter((s) => filtros.some((f) => s.includes(f)));
   if (!slugs.length) {
     console.error("Ningún artículo coincide.");
     process.exit(1);

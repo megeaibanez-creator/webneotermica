@@ -1,15 +1,14 @@
 /**
  * Portadas del blog Neotérmica (molde Furgocasa, sin flota).
  *
- * 1) Lee el .md
+ * 1) Lee `blog_articles`
  * 2) gpt-5.6-terra elige registro + idea visual (evita repetir las 5 anteriores)
  * 3) El mismo modelo escribe el prompt y lo pule
  * 4) gpt-image-2 genera la foto
- * 5) Guarda public/images/blog/{slug}.jpg, sube al bucket `blog` si hay
- *    Supabase, y escribe la URL pública en `cover:` + blog_articles
+ * 5) Sube al bucket `blog/covers` y escribe `cover` en la fila
  *
  * Corre DESPUÉS del agente redactor (el prompt lee el artículo).
- * Sin `reescrito:` se salta el post (salvo --force).
+ * Sin `reescrito` se salta el post (salvo --force).
  *
  *   npm run generate:blog-covers
  *   npm run generate:blog-covers -- --force
@@ -18,7 +17,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
 import { createClient } from "@supabase/supabase-js";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -40,7 +38,6 @@ if (!key) {
 const TEXT_MODEL = process.env.BLOG_COVER_TEXT_MODEL?.trim() || "gpt-5.6-terra";
 const TEXT_FALLBACK = "gpt-4o";
 const IMAGE_MODEL = process.env.BLOG_COVER_IMAGE_MODEL?.trim() || "gpt-image-2";
-const BLOG_DIR = path.join(root, "content", "blog");
 const OUT_DIR = path.join(root, "public", "images", "blog");
 const FEED_PATH = path.join(OUT_DIR, "_feed.json");
 const ESCENAS = ["habitacion", "tecnico", "equipo", "detalle"];
@@ -235,14 +232,6 @@ async function subirPortada(slug, buf) {
   return publicUrl;
 }
 
-function setCoverFrontmatter(raw, cover) {
-  const line = `cover: "${cover}"`;
-  // gray-matter a veces pliega cover: >- y una línea indentada; no dejarla huérfana.
-  if (/^cover:/m.test(raw)) {
-    return raw.replace(/^cover:[^\n]*(?:\n[ \t]+[^\n]+)*/m, line);
-  }
-  return raw.replace(/\n---\r?\n/, `\n${line}\n---\n`);
-}
 
 async function clasificar(dos) {
   const raw = await chat(
@@ -302,38 +291,37 @@ async function generarFoto(prompt) {
   return Buffer.from(b64, "base64");
 }
 
-function leerPosts() {
-  return fs
-    .readdirSync(BLOG_DIR)
-    .filter((f) => f.endsWith(".md"))
-    .map((file) => {
-      const full = path.join(BLOG_DIR, file);
-      const raw = fs.readFileSync(full, "utf8");
-      const { data, content } = matter(raw);
-      const slug = String(data.slug ?? file.replace(/\.md$/, ""));
-      return {
-        file,
-        full,
-        raw,
-        slug,
-        title: String(data.title || slug),
-        description: String(data.description || ""),
-        servicio: data.servicio ? String(data.servicio) : "",
-        cover: data.cover ? String(data.cover) : "",
-        reescrito: Boolean(data.reescrito),
-        content,
-        date: String(data.date || ""),
-      };
-    })
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+async function leerPosts() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !service) {
+    console.error("Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY");
+    process.exit(1);
+  }
+  const sb = createClient(url, service, { auth: { persistSession: false } });
+  const { data, error } = await sb
+    .from("blog_articles")
+    .select("slug,title,date,description,servicio,cover,reescrito,content")
+    .order("date", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    slug: String(row.slug),
+    title: String(row.title || row.slug),
+    description: String(row.description || ""),
+    servicio: row.servicio ? String(row.servicio) : "",
+    cover: row.cover ? String(row.cover) : "",
+    reescrito: Boolean(row.reescrito),
+    content: String(row.content || ""),
+    date: String(row.date || ""),
+  }));
 }
 
 const args = process.argv.slice(2);
 const force = args.includes("--force");
 const filtro = args.filter((a) => a !== "--force");
 
-const posts = leerPosts().filter((p) =>
-  filtro.length ? filtro.some((f) => p.slug.includes(f) || p.file.includes(f)) : true,
+const posts = (await leerPosts()).filter((p) =>
+  filtro.length ? filtro.some((f) => p.slug.includes(f)) : true,
 );
 if (!posts.length) {
   console.error("Ningún artículo coincide.");
@@ -368,7 +356,6 @@ for (const post of posts) {
   fs.writeFileSync(dest, buf);
   const remota = await subirPortada(post.slug, buf);
   const cover = remota || rel;
-  fs.writeFileSync(post.full, setCoverFrontmatter(post.raw, cover));
   feed.push({
     slug: post.slug,
     scene_type: escena.scene_type,

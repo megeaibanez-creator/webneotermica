@@ -1,5 +1,6 @@
 /**
- * Importa los 21 posts de la WordPress a content/blog/.
+ * OBSOLETO. El blog vive en `blog_articles`. No vuelvas a escribir .md.
+ * Importaba los 21 posts de la WordPress a content/blog/ (carpeta borrada).
  *
  *   node scripts/import-blog.mjs
  *

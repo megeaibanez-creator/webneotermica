@@ -72,7 +72,7 @@ export default function BlogTabla({ posts, publicados }: Props) {
         p.reescrito ? (
           <AdminPildora tono="ok">Agente</AdminPildora>
         ) : (
-          <AdminPildora tono="muted">WordPress</AdminPildora>
+          <AdminPildora tono="muted">Pendiente</AdminPildora>
         ),
     },
     {
@@ -121,7 +121,7 @@ export default function BlogTabla({ posts, publicados }: Props) {
     <div className="admin-shell">
       <h1 className="mb-2 text-3xl">Blog</h1>
       <p className="mb-6 max-w-xl text-mutedink">
-        {posts.length} artículos en <code>content/blog/</code>. {publicados} se ven en la
+        {posts.length} artículos en <code>blog_articles</code>. {publicados} se ven en la
         web. El texto lo reescribe el agente: <code>npm run redact:blog -- --all</code>.
         Las portadas, después del texto: <code>npm run generate:blog-covers</code>.
       </p>

@@ -1,7 +1,7 @@
 /**
  * Sube hilos / mensajes / notas del revisor desde `.data/*.jsonl` a Supabase.
  *   npx tsx scripts/migrate-local-chat.ts
- * No toca el blog (vive en content/blog/). El RAG es `npm run ingest:chatbot-kb`.
+ * No toca el blog (`blog_articles`). El RAG es `npm run ingest:chatbot-kb`.
  */
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";

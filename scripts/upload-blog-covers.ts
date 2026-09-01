@@ -1,9 +1,9 @@
 /**
  * Sube public/images/blog/*.jpg al bucket público `blog` y apunta
- * blog_articles.cover (+ frontmatter) a la URL de Storage.
+ * blog_articles.cover a la URL de Storage.
  *   npx tsx scripts/upload-blog-covers.ts
  */
-import { readFileSync, existsSync, readdirSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
@@ -23,14 +23,6 @@ function cargarEnv() {
 cargarEnv();
 if (process.env.BLOG_REDACTOR_INSECURE_TLS !== "0") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-}
-
-function setCoverFrontmatter(raw: string, cover: string): string {
-  const line = `cover: "${cover}"`;
-  if (/^cover:/m.test(raw)) {
-    return raw.replace(/^cover:[^\n]*(?:\n[ \t]+[^\n]+)*/m, line);
-  }
-  return raw.replace(/\n---\r?\n/, `\n${line}\n---\n`);
 }
 
 async function main() {
@@ -55,7 +47,6 @@ async function main() {
 
   const dir = path.join(process.cwd(), "public", "images", "blog");
   const jpgs = readdirSync(dir).filter((f) => f.toLowerCase().endsWith(".jpg"));
-  const mdDir = path.join(process.cwd(), "content", "blog");
 
   for (const [i, file] of jpgs.entries()) {
     const slug = file.replace(/\.jpg$/i, "");
@@ -74,11 +65,6 @@ async function main() {
       .update({ cover: publicUrl, updated_at: new Date().toISOString() })
       .eq("slug", slug);
     if (upErr) throw new Error(`cover ${slug}: ${upErr.message}`);
-
-    const md = path.join(mdDir, `${slug}.md`);
-    if (existsSync(md)) {
-      writeFileSync(md, setCoverFrontmatter(readFileSync(md, "utf8"), publicUrl), "utf8");
-    }
     process.stdout.write(`\r  ${i + 1}/${jpgs.length} ${slug}`);
   }
   console.log(`\nOK ${jpgs.length} portadas en Storage + blog_articles.`);

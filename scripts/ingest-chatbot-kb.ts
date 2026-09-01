@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { SERVICIOS } from "../src/lib/servicios";
-import { getAllPostsRaw } from "../src/lib/blog";
+import { getAllPosts } from "../src/lib/blog";
 import { bloqueVivo, EMBEDDING_MODEL } from "../src/lib/chatbot/prompt";
 
 function cargarEnv() {
@@ -59,7 +59,7 @@ async function main() {
       slug: s.slug,
       content: `${s.h1}\n${s.intro.join("\n")}\n${s.puntos.join(". ")}`,
     })),
-    ...getAllPostsRaw()
+    ...(await getAllPosts())
       .filter((p) => p.status === "published")
       .map((p) => ({
       source: "blog",

@@ -29,7 +29,7 @@ En Windows, si `fetch` a OpenAI o Supabase falla por TLS (proxy Acttax): la mism
 | `/` | Home. Calculadora = horquilla (tabla + fórmula, no un LLM). % provisionales. |
 | `/servicios` + `/servicios/{oficio}` | Hub + 8 landings (H2 pregunta, schema Service/FAQ). **Sin** pueblo en la URL. Posts del oficio = carrusel de la home. |
 | `/estancias` | Recorrido 3D. |
-| `/blog` + `/blog/{slug}` | 21 posts en `content/blog/`. Texto: agente `redact:blog`. Portada: `cover:` + `public/images/blog/`. Molde: comercios. |
+| `/blog` + `/blog/{slug}` | Tabla `blog_articles`. Texto: `redact:blog`. Portada: Storage `blog/covers`. Molde: comercios. |
 | `/contacto` | Formulario (`#formulario`) + mapa. El form **no** va en la home. |
 | `/aviso-legal`, `/politica-de-privacidad`, `/politica-de-cookies`, `/accesibilidad` | Legal. |
 | `/administrator` | Taller: blog, contactos, CRM, chat (Respuestas + Conversaciones; nota del revisor). |
@@ -44,7 +44,7 @@ Chat del visitante: **Nora** («Nora, tu asistente virtual de climatización»).
 |---|---|
 | `npm run dev` / `build` / `start` | Next |
 | `npm run redact:blog` | Agente redactor (`gpt-5.6-terra` + web_search). `--all` / `--reescribir` / un trozo de slug. **No** pases `--force` por npm: se lo come. |
-| `npm run generate:blog-covers` | Portada **después** del texto. Lee el artículo → `gpt-image-2`. Sin `reescrito:` se salta. |
+| `npm run generate:blog-covers` | Portada **después** del texto. Lee `blog_articles` → `gpt-image-2`. Sin `reescrito` se salta. |
 | `npm run import:blog` | Traer posts (migración WP). |
 | `npm run ingest:chatbot-kb` | Embeddings del RAG. |
 | `npm run review:chatbot-messages` | Revisor (10/5/0). Local: `.data`. Windows: `npx tsx scripts/review-chatbot-messages.ts`. |
@@ -79,7 +79,7 @@ El SQL está escrito. Hoy, en dev, las mismas columnas van a `.data/<tabla>.json
 | `chat_reviews` | Esa nota | misma pantalla |
 | `chatbot_kb` | Embeddings (landings + blog). Hace falta Postgres + `vector` | no hay tabla en el admin |
 
-**No va en Supabase:** las fotos de obras (`public/uploads/`). Blog: texto en `blog_articles`, portadas en Storage (bucket `blog/covers`). Copia local en `public/images/blog/` y `content/blog/` para el redactor.
+**No va en Supabase:** las fotos de obras (`public/uploads/`). Blog: texto en `blog_articles`, portadas en Storage (bucket `blog/covers`). Copia local de portadas en `public/images/blog/`.
 
 Huecos: `/proyectos` pública no está; `chatbot_kb` no funciona en `.data`. El panel de chat ya es el molde Andrea: Respuestas + Conversaciones; califica el revisor, no el admin. Fotos en el form de contacto: **más adelante**, no ahora.
 
