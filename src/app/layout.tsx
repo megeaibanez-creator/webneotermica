@@ -28,6 +28,9 @@ export const metadata: Metadata = {
   description:
     "Empresa de climatización en Murcia: instalación, reparación y renovación de aire acondicionado, aerotermia, suelo radiante, calderas, radiadores y ventilación.",
   alternates: { canonical: "/" },
+  verification: {
+    google: "N1aQib2y4UreAoxRZvd8kR_0lOy5rWjcc_RjnbK5pwc",
+  },
   icons: { icon: "/favicon.png" },
 };
 
