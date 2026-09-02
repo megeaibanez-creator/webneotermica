@@ -71,7 +71,8 @@ export default function Agenda() {
   const [ancla, setAncla] = useState(() => new Date());
   const [filtro, setFiltro] = useState<string>("");
   const [editar, setEditar] = useState<ActuacionCompleta | null>(null);
-  const [nueva, setNueva] = useState<{ fecha?: string } | null>(null);
+  const [nueva, setNueva] = useState<{ fecha?: string; obra?: string } | null>(null);
+  const [obraTratada, setObraTratada] = useState(false);
 
   async function cargar() {
     const res = await fetch("/api/admin/agenda");
@@ -92,6 +93,17 @@ export default function Agenda() {
     void cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Si venimos de una obra (/administrator/agenda?obra=ID), abre el editor con
+  // esa obra ya elegida en cuanto lleguen los datos.
+  useEffect(() => {
+    if (obraTratada || datos.proyectos.length === 0) return;
+    const obra = new URLSearchParams(window.location.search).get("obra");
+    if (obra && datos.proyectos.some((p) => p.id === obra)) {
+      setNueva({ obra });
+    }
+    setObraTratada(true);
+  }, [datos.proyectos, obraTratada]);
 
   const perfilPorId = useMemo(() => {
     const m = new Map<string, Perfil>();
@@ -285,6 +297,7 @@ export default function Agenda() {
         <EditorActuacion
           actuacion={editar}
           fechaInicial={nueva?.fecha}
+          proyectoInicial={nueva?.obra}
           proyectos={datos.proyectos}
           perfiles={datos.perfiles}
           onCerrar={() => {
@@ -307,6 +320,7 @@ export default function Agenda() {
 function EditorActuacion({
   actuacion,
   fechaInicial,
+  proyectoInicial,
   proyectos,
   perfiles,
   onCerrar,
@@ -314,6 +328,7 @@ function EditorActuacion({
 }: {
   actuacion: ActuacionCompleta | null;
   fechaInicial?: string;
+  proyectoInicial?: string;
   proyectos: ProyectoSel[];
   perfiles: Perfil[];
   onCerrar: () => void;
@@ -322,7 +337,7 @@ function EditorActuacion({
   const edita = Boolean(actuacion);
   const base = fechaInicial ?? claveDia(new Date());
 
-  const [projectId, setProjectId] = useState(actuacion?.project_id ?? "");
+  const [projectId, setProjectId] = useState(actuacion?.project_id ?? proyectoInicial ?? "");
   const [titulo, setTitulo] = useState(actuacion?.titulo ?? "");
   const [tipo, setTipo] = useState(actuacion?.tipo ?? "instalacion");
   const [estado, setEstado] = useState(actuacion?.estado ?? "pendiente");

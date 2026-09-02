@@ -105,16 +105,28 @@
   }
 }
 
-/* Hoja lateral del admin: fundido del fondo + deslizamiento del panel. */
+/* Hoja del admin: fundido del fondo + entrada del panel.
+   Móvil (PWA): bottom-sheet, sube desde abajo. Escritorio: lateral derecha. */
 .admin-hoja-fondo {
   animation: admin-fundido 0.18s ease-out;
 }
 .admin-hoja {
-  animation: admin-desliza 0.22s ease-out;
+  animation: admin-sube 0.24s ease-out;
 }
 @keyframes admin-fundido {
   from {
     opacity: 0;
+  }
+}
+@keyframes admin-sube {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@media (min-width: 640px) {
+  .admin-hoja {
+    animation: admin-desliza 0.22s ease-out;
   }
 }
 @keyframes admin-desliza {

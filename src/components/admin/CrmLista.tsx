@@ -647,6 +647,12 @@ function Ficha({
         />
         <div className="flex flex-wrap gap-2">
           <Link
+            href={`/administrator/agenda?obra=${p.id}`}
+            className="rounded-full bg-brand px-3 py-1 text-xs font-medium text-white"
+          >
+            + Nueva actuación
+          </Link>
+          <Link
             href={`/administrator/presupuestos?cliente=${p.client_id}`}
             className="rounded-full border border-line px-3 py-1 text-xs"
           >

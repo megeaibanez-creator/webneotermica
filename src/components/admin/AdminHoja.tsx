@@ -41,15 +41,19 @@ export default function AdminHoja({
 
   return (
     <div
-      className="admin-hoja-fondo fixed inset-0 z-[60] flex justify-end bg-ink/40"
+      className="admin-hoja-fondo fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 sm:items-stretch sm:justify-end"
       onClick={onCerrar}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className={`admin-hoja flex h-full w-full ${ancho} flex-col bg-white shadow-2xl`}
+        className={`admin-hoja flex max-h-[92dvh] w-full ${ancho} flex-col rounded-t-2xl bg-white shadow-2xl sm:h-full sm:max-h-none sm:rounded-none`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Tirador: solo en móvil, afordancia de bottom-sheet. */}
+        <div className="flex justify-center pt-2 sm:hidden">
+          <span className="h-1.5 w-10 rounded-full bg-line" />
+        </div>
         <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div className="min-w-0">
             <h2 className="truncate font-display text-lg font-semibold">{titulo}</h2>
@@ -67,8 +71,14 @@ export default function AdminHoja({
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
-        {pie && <div className="border-t border-line bg-page px-5 py-3">{pie}</div>}
+        <div className="flex-1 overflow-y-auto p-5 [padding-bottom:calc(1.25rem+env(safe-area-inset-bottom))]">
+          {children}
+        </div>
+        {pie && (
+          <div className="border-t border-line bg-page px-5 py-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
+            {pie}
+          </div>
+        )}
       </div>
     </div>
   );
