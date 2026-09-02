@@ -57,7 +57,16 @@ declare global {
   }
 }
 
-export function pushConsentUpdate(consent: Consent) {
+function sendPageView() {
+  if (typeof window.gtag !== "function") return false;
+  window.gtag("event", "page_view", {
+    page_location: window.location.href,
+    page_title: document.title,
+  });
+  return true;
+}
+
+export function pushConsentUpdate(consent: Consent, opts?: { pageView?: boolean }) {
   if (typeof window === "undefined") return;
   const args: GtagArgs = [
     "consent",
@@ -71,15 +80,30 @@ export function pushConsentUpdate(consent: Consent) {
     },
   ];
   window.dataLayer = window.dataLayer || [];
-  // gtag() empuja `arguments` al dataLayer; sin gtag cargado, empujamos igual.
-  if (typeof window.gtag === "function") window.gtag(...args);
-  else window.dataLayer.push(args);
+
+  const apply = () => {
+    if (typeof window.gtag === "function") {
+      window.gtag(...args);
+      if (opts?.pageView && consent.analytics) sendPageView();
+      return true;
+    }
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(args);
+    return false;
+  };
+
+  if (apply()) return;
+  window.setTimeout(apply, 100);
+  window.setTimeout(apply, 500);
+  window.setTimeout(apply, 1500);
 }
 
 export function saveConsent(consent: Consent) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
-  pushConsentUpdate(consent);
+  // El page_view del primer paint salió con analytics denied; sin este,
+  // Tiempo real no te cuenta aunque hayas aceptado.
+  pushConsentUpdate(consent, { pageView: consent.analytics });
   window.dispatchEvent(new CustomEvent<Consent>(CONSENT_EVENT, { detail: consent }));
 }
 

@@ -53,7 +53,11 @@ export default function ServiciosPage() {
       <section className="pb-16">
         <div className="container-site grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICIOS.map((s) => (
-            <article key={s.slug} className="card card-hover flex flex-col !p-0">
+            <Link
+              key={s.slug}
+              href={`/servicios/${s.slug}`}
+              className="card card-hover group flex flex-col !p-0 no-underline text-inherit"
+            >
               <div className="relative h-40 overflow-hidden rounded-t-[20px] bg-gradient-to-br from-brand-dark to-ink">
                 {fotoServicio(s.slug) && (
                   <Image
@@ -68,14 +72,11 @@ export default function ServiciosPage() {
               <div className="flex flex-1 flex-col p-6">
                 <h2 className="mb-2 text-[1.25rem]">{s.nombre}</h2>
                 <p className="mb-4 flex-1 text-[0.92rem] text-mutedink">{s.corto}</p>
-                <Link
-                  href={`/servicios/${s.slug}`}
-                  className="font-display text-[0.85rem] font-semibold text-accent"
-                >
+                <span className="font-display text-[0.85rem] font-semibold text-accent group-hover:underline">
                   Ver el servicio →
-                </Link>
+                </span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </section>

@@ -327,7 +327,7 @@ export default function ChatWidget() {
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-[0.95rem] font-semibold leading-tight">{ASSISTANT_NAME}</h2>
               <p className="text-[0.68rem] leading-snug text-white/80">
-                tu asistente virtual de climatización
+                tu asistente virtual de NEOTERMICA{" "}
               </p>
             </div>
             <button
