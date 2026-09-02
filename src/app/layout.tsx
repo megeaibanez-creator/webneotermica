@@ -44,13 +44,23 @@ export default function RootLayout({
         <Script id="consent-default" strategy="beforeInteractive">
           {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
+window.gtag = gtag;
+var a='denied',m='denied',f='denied';
+try{
+  var p=JSON.parse(localStorage.getItem('neotermica_consent_v1')||'null');
+  if(p){
+    if(p.analytics) a='granted';
+    if(p.marketing) m='granted';
+    if(p.preferences) f='granted';
+  }
+}catch(e){}
 gtag('consent','default',{
-  ad_storage:'denied',
-  ad_user_data:'denied',
-  ad_personalization:'denied',
-  analytics_storage:'denied',
-  functionality_storage:'denied',
-  wait_for_update: 500
+  ad_storage:m,
+  ad_user_data:m,
+  ad_personalization:m,
+  analytics_storage:a,
+  functionality_storage:f,
+  wait_for_update:500
 });`}
         </Script>
 
