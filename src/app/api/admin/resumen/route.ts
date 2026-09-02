@@ -183,11 +183,11 @@ export async function GET() {
 
   const leads = leerLocal<LeadFila>("contact_submissions");
   const obras = leerLocal<ObraFila>("projects");
-  const quotes = leerLocal<{ status: string }>("quotes");
-  const invoices = leerLocal<{ status: string }>("invoices");
+  const quotes = leerLocal<{ status: string; created_at: string }>("quotes");
+  const invoices = leerLocal<{ status: string; created_at: string }>("invoices");
   const hilos = leerLocal("chat_threads");
   const msgs = leerLocal<PreguntaFila & { role?: string }>("chat_messages");
-  const posts = leerLocal<PostFila>("blog_articles");
+  const posts: PostFila[] = [];
   const publicados = posts.filter((p) => p.status === "published");
   const preguntas = msgs.filter((m) => m.role === "user");
 
