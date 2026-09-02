@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import AdminChrome from "@/components/admin/AdminChrome";
+import { redirect } from "next/navigation";
+import { getStaffActual } from "@/lib/staff";
+import TecnicoChrome from "@/components/tecnico/TecnicoChrome";
 
 export const metadata: Metadata = {
-  title: "Administración",
+  title: "Mi agenda · Neotérmica",
   robots: { index: false, follow: false },
   manifest: "/manifest.webmanifest",
   applicationName: "Neotérmica",
@@ -19,13 +21,17 @@ export const viewport: Viewport = {
   themeColor: "#cb0a3d",
 };
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function TecnicoLayout({ children }: { children: React.ReactNode }) {
+  const staff = await getStaffActual();
+  if (!staff) redirect("/administrator/login");
   return (
     <>
       <Script id="sw-register" strategy="afterInteractive">
         {`if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}`}
       </Script>
-      <AdminChrome>{children}</AdminChrome>
+      <TecnicoChrome nombre={staff.nombre}>{children}</TecnicoChrome>
     </>
   );
 }

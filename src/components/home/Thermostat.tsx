@@ -5,8 +5,6 @@ import {
   applyClima,
   persistClima,
   colorAt,
-  CONFORT_DESDE,
-  CONFORT_HASTA,
   modoClima,
   restoreClima,
   tempDeT,
@@ -15,7 +13,15 @@ import {
 /**
  * Misma rueda de color que la 06/08, girada para que el rojo quede arriba
  * (la home arranca en crimson). El puntito da la vuelta entera.
+ * El 16 ° queda en el centro del azul; el anillo usa colorAt en cada ángulo.
  */
+
+const ORIGEN = 172;
+/** Grados de azul puro a cada lado del 16 °. */
+const AZUL_SEMI = 16;
+const G_MEDIO = 96;
+const G_CALOR = 188;
+const G_ROJO_FIN = 270;
 
 function wrap(a: number) {
   let x = a % 360;
@@ -31,19 +37,35 @@ function cssDeAngulo(a: number) {
 
 /** Mismos tramos que el anillo original; el rojo (t=1) cae arriba. */
 function tDeAngulo(a: number) {
-  const g = (cssDeAngulo(a) - 172 + 360) % 360;
-  if (g <= 96) return (g / 96) * 0.5;
-  if (g <= 188) return 0.5 + ((g - 96) / 92) * 0.5;
-  if (g <= 270) return 1;
-  return 1 - (g - 270) / 90;
+  const g = (cssDeAngulo(a) - ORIGEN + 360) % 360;
+  if (g <= AZUL_SEMI || g >= 360 - AZUL_SEMI) return 0;
+  if (g <= G_MEDIO) return ((g - AZUL_SEMI) / (G_MEDIO - AZUL_SEMI)) * 0.5;
+  if (g <= G_CALOR) return 0.5 + ((g - G_MEDIO) / (G_CALOR - G_MEDIO)) * 0.5;
+  if (g <= G_ROJO_FIN) return 1;
+  return 1 - (g - G_ROJO_FIN) / (360 - AZUL_SEMI - G_ROJO_FIN);
 }
 
 function anguloDeT(t: number) {
   const x = Math.min(1, Math.max(0, t));
   if (x >= 0.999) return 0;
-  if (x <= 0.5) return wrap((x / 0.5) * 96 + 172);
-  return wrap(96 + ((x - 0.5) / 0.5) * 92 + 172);
+  if (x <= 0) return wrap(ORIGEN);
+  if (x <= 0.5) return wrap(AZUL_SEMI + (x / 0.5) * (G_MEDIO - AZUL_SEMI) + ORIGEN);
+  return wrap(G_MEDIO + ((x - 0.5) / 0.5) * (G_CALOR - G_MEDIO) + ORIGEN);
 }
+
+function anilloFondo(): string {
+  const cortes = new Set<number>();
+  for (let g = 0; g <= 360; g += 4) cortes.add(g);
+  for (const g of [AZUL_SEMI, G_MEDIO, G_CALOR, G_ROJO_FIN, 360 - AZUL_SEMI]) {
+    cortes.add(g);
+  }
+  const stops = [...cortes]
+    .sort((a, b) => a - b)
+    .map((g) => `${colorAt(tDeAngulo(ORIGEN + g))} ${g}deg`);
+  return `conic-gradient(from ${ORIGEN}deg, ${stops.join(", ")})`;
+}
+
+const ANILLO = anilloFondo();
 
 export default function Thermostat() {
   const [angle, setAngle] = useState(0);
@@ -98,11 +120,7 @@ export default function Thermostat() {
       <div
         className="absolute inset-[8%] rounded-full"
         style={{
-          background: `conic-gradient(from 172deg, ${colorAt(0)} 0deg, ${colorAt(
-            0.5
-          )} 96deg, ${colorAt(CONFORT_DESDE)} 103deg, ${colorAt(CONFORT_HASTA)} 155deg, ${colorAt(
-            1
-          )} 188deg, ${colorAt(1)} 270deg, ${colorAt(0)} 360deg)`,
+          background: ANILLO,
           WebkitMask: "radial-gradient(circle, transparent 62%, #000 63%)",
           mask: "radial-gradient(circle, transparent 62%, #000 63%)",
         }}

@@ -123,9 +123,9 @@ export async function POST(request: Request) {
 
       if (!apiKey) {
         const texto =
-          `Ahora mismo el asistente no está conectado. Puedes llamarnos o escribirnos por ` +
-          `WhatsApp al 678 495 046, o mandarnos el caso desde /contacto y te respondemos ` +
-          `en horario de taller (L–V 9:00–14:00 y 15:30–19:00).`;
+          `Ahora mismo el asistente no está conectado. Déjanos el caso en ` +
+          `[Pedir presupuesto](/contacto#formulario) y te respondemos en horario de taller ` +
+          `(L–V 9:00–14:00 y 15:30–19:00).`;
         push("delta", { text: texto });
         const guardado = await guardarTurno({
           threadId,
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error("[chat] fallo del stream:", error);
         const aviso =
-          "Se me ha cortado la respuesta. Prueba otra vez o llámanos al 678 495 046.";
+          "Se me ha cortado la respuesta. Prueba otra vez o déjanos el caso en [Pedir presupuesto](/contacto#formulario).";
         completo = completo || aviso;
         push("delta", { text: completo ? "" : aviso });
       }

@@ -20,10 +20,13 @@ import {
 } from "@/lib/crm";
 import { SERVICIOS, getServicio } from "@/lib/servicios";
 import AdminTabla, {
+  AdminBotonLote,
+  AdminChip,
   AdminPildora,
   formatFechaAdmin,
   type ColumnaTabla,
 } from "@/components/admin/AdminTabla";
+import AdminHoja from "@/components/admin/AdminHoja";
 
 type Props = {
   entidad: EntidadCrm;
@@ -32,6 +35,24 @@ type Props = {
 };
 
 const VACIO: SnapshotCrm = { clients: [], projects: [], quotes: [], invoices: [] };
+
+const UNIDADES: Record<EntidadCrm, [string, string]> = {
+  clients: ["cliente", "clientes"],
+  projects: ["obra", "obras"],
+  quotes: ["presupuesto", "presupuestos"],
+  invoices: ["factura", "facturas"],
+};
+
+function tituloFicha(entidad: EntidadCrm, fila: { id: string }): string {
+  if (entidad === "clients") return nombreCliente(fila as Client);
+  if (entidad === "projects") return (fila as Project).title;
+  if (entidad === "quotes") {
+    const q = fila as Quote;
+    return `${q.number} · ${q.title}`;
+  }
+  const i = fila as Invoice;
+  return i.title ? `${i.number} · ${i.title}` : i.number;
+}
 
 export default function CrmLista({ entidad, inicialId, inicialCliente }: Props) {
   const router = useRouter();
@@ -42,6 +63,7 @@ export default function CrmLista({ entidad, inicialId, inicialCliente }: Props) 
   const [busqueda, setBusqueda] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(inicialId ?? null);
   const [nuevo, setNuevo] = useState(!inicialId && Boolean(inicialCliente));
+  const [seleccion, setSeleccion] = useState<string[]>([]);
 
   async function cargar() {
     const res = await fetch("/api/admin/crm");
@@ -101,10 +123,38 @@ export default function CrmLista({ entidad, inicialId, inicialCliente }: Props) 
           ? ESTADOS_FACTURA
           : [];
 
+  const porEstado = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const f of filas) {
+      if ("status" in f) {
+        const s = (f as { status: string }).status;
+        c[s] = (c[s] ?? 0) + 1;
+      }
+    }
+    return c;
+  }, [filas]);
+
+  async function cambiarEstadoLote(status: string) {
+    const ids = [...seleccion];
+    await Promise.all(
+      ids.map((id) =>
+        fetch("/api/admin/crm", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ entidad, id, status }),
+        })
+      )
+    );
+    setSeleccion([]);
+    await cargar();
+  }
+
   const columnas = useMemo(
     () => columnasDe(entidad, snap),
     [entidad, snap]
   );
+
+  const unidad = UNIDADES[entidad];
 
   return (
     <div className="admin-shell">
@@ -127,6 +177,23 @@ export default function CrmLista({ entidad, inicialId, inicialCliente }: Props) 
 
       {error && <p className="mb-4 text-accent">{error}</p>}
 
+      {estados.length > 0 && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          <AdminChip activo={filtro === ""} onClick={() => setFiltro("")}>
+            Todos · {filas.length}
+          </AdminChip>
+          {estados.map((e) => (
+            <AdminChip
+              key={e.value}
+              activo={filtro === e.value}
+              onClick={() => setFiltro(e.value)}
+            >
+              {e.label} · {porEstado[e.value] ?? 0}
+            </AdminChip>
+          ))}
+        </div>
+      )}
+
       <AdminTabla
         columnas={columnas}
         filas={visibles}
@@ -135,44 +202,57 @@ export default function CrmLista({ entidad, inicialId, inicialCliente }: Props) 
         busqueda={busqueda}
         onBusqueda={setBusqueda}
         placeholder={placeholderDe(entidad)}
-        filtro={estados.length > 0 ? filtro : undefined}
-        onFiltro={estados.length > 0 ? setFiltro : undefined}
-        opcionesFiltro={
-          estados.length > 0
-            ? [{ value: "", label: "Todos los estados" }, ...estados]
-            : undefined
-        }
         filaActiva={nuevo ? null : selectedId}
         onFila={(fila) => {
           setSelectedId(fila.id);
           setNuevo(false);
         }}
-        pie={`Mostrando ${visibles.length} de ${filas.length}`}
+        unidad={unidad}
+        seleccion={estados.length > 0 ? seleccion : undefined}
+        onSeleccion={estados.length > 0 ? setSeleccion : undefined}
+        acciones={
+          estados.length > 0 ? (
+            <>
+              <span className="text-xs text-mutedink">Pasar a:</span>
+              {estados.map((e) => (
+                <AdminBotonLote key={e.value} onClick={() => void cambiarEstadoLote(e.value)}>
+                  {e.label}
+                </AdminBotonLote>
+              ))}
+            </>
+          ) : undefined
+        }
       />
 
-      {(nuevo || selected) && (
-        <div className="admin-card mt-6 p-6">
-          {nuevo ? (
-            <Formulario
-              entidad={entidad}
-              snap={snap}
-              inicialCliente={inicialCliente}
-              onCancelar={() => setNuevo(false)}
-              onGuardado={(id) => {
-                setNuevo(false);
-                setSelectedId(id);
-                void cargar();
-              }}
-            />
-          ) : selected ? (
-            <Ficha
-              entidad={entidad}
-              fila={selected}
-              snap={snap}
-              onCambio={() => void cargar()}
-            />
-          ) : null}
-        </div>
+      {nuevo && (
+        <AdminHoja titulo={copy.alta} onCerrar={() => setNuevo(false)}>
+          <Formulario
+            entidad={entidad}
+            snap={snap}
+            inicialCliente={inicialCliente}
+            onCancelar={() => setNuevo(false)}
+            onGuardado={(id) => {
+              setNuevo(false);
+              setSelectedId(id);
+              void cargar();
+            }}
+          />
+        </AdminHoja>
+      )}
+
+      {!nuevo && selected && (
+        <AdminHoja
+          titulo={tituloFicha(entidad, selected)}
+          subtitulo={formatFechaAdmin((selected as { created_at?: string }).created_at)}
+          onCerrar={() => setSelectedId(null)}
+        >
+          <Ficha
+            entidad={entidad}
+            fila={selected}
+            snap={snap}
+            onCambio={() => void cargar()}
+          />
+        </AdminHoja>
       )}
     </div>
   );
@@ -453,9 +533,11 @@ function Ficha({
   onCambio: () => void;
 }) {
   const [aviso, setAviso] = useState("");
+  const [guardado, setGuardado] = useState(false);
 
   async function patch(cambios: Record<string, unknown>) {
     setAviso("");
+    setGuardado(false);
     const res = await fetch("/api/admin/crm", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -466,8 +548,20 @@ function Ficha({
       setAviso(data.error ?? "No se pudo guardar.");
       return;
     }
+    setGuardado(true);
     onCambio();
   }
+
+  const mensajes = (
+    <>
+      {aviso && <p className="text-accent">{aviso}</p>}
+      {guardado && !aviso && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+          Cambios guardados.
+        </p>
+      )}
+    </>
+  );
 
   const clienteDe = (clientId: string) => snap.clients.find((c) => c.id === clientId);
 
@@ -478,7 +572,7 @@ function Ficha({
     const facturas = snap.invoices.filter((i) => i.client_id === c.id);
     return (
       <div className="space-y-4 text-sm">
-        {aviso && <p className="text-accent">{aviso}</p>}
+        {mensajes}
         <CamposCliente
           inicial={c}
           onSubmit={(datos) => void patch(datos)}
@@ -536,7 +630,7 @@ function Ficha({
     const facturas = snap.invoices.filter((i) => i.project_id === p.id);
     return (
       <div className="space-y-4 text-sm">
-        {aviso && <p className="text-accent">{aviso}</p>}
+        {mensajes}
         {c && (
           <p>
             Cliente:{" "}
@@ -590,8 +684,7 @@ function Ficha({
     const facturas = snap.invoices.filter((i) => i.quote_id === q.id);
     return (
       <div className="space-y-4 text-sm">
-        {aviso && <p className="text-accent">{aviso}</p>}
-        <p className="font-semibold">{q.number}</p>
+        {mensajes}
         {c && (
           <p>
             Cliente:{" "}
@@ -640,8 +733,7 @@ function Ficha({
   const oferta = i.quote_id ? snap.quotes.find((q) => q.id === i.quote_id) : null;
   return (
     <div className="space-y-4 text-sm">
-      {aviso && <p className="text-accent">{aviso}</p>}
-      <p className="font-semibold">{i.number}</p>
+      {mensajes}
       {c && (
         <p>
           Cliente:{" "}
@@ -713,7 +805,6 @@ function Formulario({
 
   return (
     <div className="space-y-4 text-sm">
-      <p className="font-semibold">{COPY_CRM[entidad].alta}</p>
       {aviso && <p className="text-accent">{aviso}</p>}
       {entidad === "clients" && (
         <CamposCliente

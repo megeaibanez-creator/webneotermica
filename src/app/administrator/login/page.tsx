@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { esEmailAdmin } from "@/lib/site";
 
 const K_EMAIL = "neotermica_admin_email";
 const K_REMEMBER = "neotermica_admin_remember";
@@ -105,14 +104,17 @@ export default function AdminLoginPage() {
       setError(mensajeError(err?.message ?? ""));
       return;
     }
-    if (!esEmailAdmin(data.user.email)) {
+    const me = (await fetch("/api/staff/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)) as { rol?: string } | null;
+    if (!me?.rol) {
       await sb.auth.signOut();
       setLoading(null);
-      setError("Esa cuenta no es administradora.");
+      setError("Esta cuenta no tiene acceso al panel.");
       return;
     }
     guardarPreferencias(email, recuerdame);
-    router.push("/administrator");
+    router.push(me.rol === "tecnico" ? "/tecnico" : "/administrator");
     router.refresh();
   }
 

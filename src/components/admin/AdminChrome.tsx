@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarCheck,
+  CalendarDays,
   ExternalLink,
   FileText,
   FolderKanban,
+  HardHat,
   LayoutDashboard,
   Menu,
   MessageSquare,
@@ -17,28 +20,63 @@ import {
   X,
 } from "lucide-react";
 
-const NAV: {
+type ItemNav = {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
-}[] = [
+};
+
+const NAV_ADMIN: ItemNav[] = [
   { href: "/administrator", label: "Panel", icon: LayoutDashboard, exact: true },
   { href: "/administrator/blog", label: "Blog", icon: FileText },
   { href: "/administrator/clientes", label: "Clientes", icon: UserRound },
   { href: "/administrator/contactos", label: "Contactos", icon: Users },
   { href: "/administrator/proyectos", label: "Proyectos", icon: FolderKanban },
+  { href: "/administrator/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/administrator/presupuestos", label: "Presupuestos", icon: ScrollText },
   { href: "/administrator/facturacion", label: "Facturación", icon: Receipt },
+  { href: "/administrator/equipo", label: "Equipo", icon: HardHat },
   { href: "/administrator/chatbot", label: "Chat", icon: MessageSquare },
-] as const;
+];
+
+const NAV_TECNICO: ItemNav[] = [
+  { href: "/administrator/mi-agenda", label: "Mi agenda", icon: CalendarCheck },
+];
 
 export default function AdminChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
   const [abierto, setAbierto] = useState(false);
+  const [esTecnico, setEsTecnico] = useState(false);
+
+  useEffect(() => {
+    if (pathname.startsWith("/administrator/login")) return;
+    void fetch("/api/staff/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me: { es_tecnico?: boolean } | null) => setEsTecnico(Boolean(me?.es_tecnico)))
+      .catch(() => undefined);
+  }, [pathname]);
 
   if (pathname.startsWith("/administrator/login")) {
     return <>{children}</>;
+  }
+
+  function pinta(item: ItemNav) {
+    const activo = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setAbierto(false)}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+          activo ? "bg-accent text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+        }`}
+      >
+        <Icon className="h-5 w-5 shrink-0" aria-hidden />
+        {item.label}
+      </Link>
+    );
   }
 
   return (
@@ -73,27 +111,21 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {NAV.map((item) => {
-            const activo = item.exact
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setAbierto(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  activo
-                    ? "bg-accent text-white"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <Icon className="h-5 w-5 shrink-0" aria-hidden />
-                {item.label}
-              </Link>
-            );
-          })}
+          {esTecnico && (
+            <p className="px-3 pb-1 pt-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
+              Administración
+            </p>
+          )}
+          {NAV_ADMIN.map(pinta)}
+
+          {esTecnico && (
+            <>
+              <p className="px-3 pb-1 pt-4 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
+                Técnico
+              </p>
+              {NAV_TECNICO.map(pinta)}
+            </>
+          )}
         </nav>
 
         <div className="border-t border-white/10 p-3">

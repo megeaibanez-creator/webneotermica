@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { getServicio } from "@/lib/servicios";
+import AdminHoja from "@/components/admin/AdminHoja";
 
 type Post = {
   slug: string;
@@ -22,6 +24,12 @@ type Props = { posts: Post[]; publicados: number };
 export default function BlogTabla({ posts, publicados }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [filtro, setFiltro] = useState("");
+  const [slugAbierto, setSlugAbierto] = useState<string | null>(null);
+
+  const abierto = useMemo(
+    () => (slugAbierto ? (posts.find((p) => p.slug === slugAbierto) ?? null) : null),
+    [posts, slugAbierto]
+  );
 
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -140,8 +148,77 @@ export default function BlogTabla({ posts, publicados }: Props) {
           { value: "published", label: "Publicado" },
           { value: "scheduled", label: "Programado" },
         ]}
-        pie={`Mostrando ${visibles.length} de ${posts.length}`}
+        filaActiva={slugAbierto}
+        onFila={(p) => setSlugAbierto(p.slug)}
+        unidad={["artículo", "artículos"]}
       />
+
+      {abierto && (
+        <AdminHoja
+          titulo={abierto.title}
+          subtitulo={`/${abierto.slug}`}
+          onCerrar={() => setSlugAbierto(null)}
+          pie={
+            abierto.status === "published" ? (
+              <Link
+                href={`/blog/${abierto.slug}`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
+              >
+                Ver en la web <ExternalLink className="h-4 w-4" />
+              </Link>
+            ) : undefined
+          }
+        >
+          {abierto.cover ? (
+            <Image
+              src={abierto.cover}
+              alt={abierto.title}
+              width={640}
+              height={360}
+              className="mb-4 aspect-[16/9] w-full rounded-xl border border-line object-cover"
+            />
+          ) : (
+            <div className="mb-4 flex aspect-[16/9] w-full items-center justify-center rounded-xl border border-dashed border-line bg-soft text-sm text-mutedink">
+              Sin portada · npm run generate:blog-covers
+            </div>
+          )}
+
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            {abierto.status === "published" ? (
+              <AdminPildora tono="ok">Publicado</AdminPildora>
+            ) : (
+              <AdminPildora tono="muted">Programado</AdminPildora>
+            )}
+            {abierto.reescrito ? (
+              <AdminPildora tono="ok">Texto del agente</AdminPildora>
+            ) : (
+              <AdminPildora tono="warn">Texto pendiente</AdminPildora>
+            )}
+            {abierto.servicio && (
+              <AdminPildora tono="info">
+                {getServicio(abierto.servicio)?.nombre ?? abierto.servicio}
+              </AdminPildora>
+            )}
+          </div>
+
+          <p className="mb-4 text-sm text-mutedink">
+            {abierto.status === "published" ? "Publicado el" : "Sale el"}{" "}
+            {new Date(`${abierto.date}T12:00:00`).toLocaleDateString("es-ES", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
+
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-mutedink">
+            Descripción (meta)
+          </p>
+          <p className="rounded-xl border border-line px-4 py-3 text-sm leading-relaxed">
+            {abierto.description || "—"}
+          </p>
+        </AdminHoja>
+      )}
     </div>
   );
 }

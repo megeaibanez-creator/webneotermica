@@ -1,0 +1,20 @@
+---
+description: Tras el revisor de Nora, si hay mejorable o incorrecta se arregla el agente (prompt, fallback, RAG).
+alwaysApply: true
+---
+
+# Nora (Neotérmica): revisar → arreglar
+
+Si piden revisar el chat o `/administrator/chatbot`:
+
+1. `npx tsx scripts/review-chatbot-messages.ts` (Windows: no `npm run` con flags). En real, sin dry-run.
+2. **5 o 0 → arreglar ahora.** Informar y parar no vale.
+
+| Causa | Dónde |
+|---|---|
+| WhatsApp, llamar, `/contacto` suelto | `src/app/api/chat/route.ts` y `src/lib/chatbot/prompt.ts` |
+| Nombre ≠ Nora, Neo, pedir fotos, frigorías/kW/precio | `prompt.ts` + `auditor.ts` |
+| La ficha traía el dato y lo ignoró | prompt o `bloqueVivo()` |
+| El hecho no está en RAG | `npx tsx scripts/ingest-chatbot-kb.ts` |
+
+CTA = `[Pedir presupuesto](/contacto#formulario)`. El form no admite fotos. Nunca se borra un visitante.

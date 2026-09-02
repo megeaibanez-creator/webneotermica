@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
 import { renderChatMarkdown } from "@/lib/chatbot/markdown";
 import AdminTabla, {
   AdminPildora,
   formatFechaAdmin,
   type ColumnaTabla,
 } from "@/components/admin/AdminTabla";
+import AdminHoja from "@/components/admin/AdminHoja";
 
 type CalidadOSin = "correcta" | "mejorable" | "incorrecta" | "sin_tipo";
 
@@ -347,7 +347,7 @@ export default function AdminChatbotPage() {
             setHiloId(null);
             setSeleccion(r);
           }}
-          pie={`Mostrando ${respuestas.length} respuestas`}
+          unidad={["respuesta", "respuestas"]}
         />
       ) : (
         <AdminTabla
@@ -357,21 +357,26 @@ export default function AdminChatbotPage() {
           vacio="Aún no hay conversaciones."
           filaActiva={hiloId}
           onFila={(c) => void abrirHilo(c.id)}
-          pie={`Mostrando ${conversaciones.length} conversaciones`}
+          unidad={["conversación", "conversaciones"]}
         />
       )}
 
       {seleccion && (
-        <Hoja titulo="Respuesta" onCerrar={() => setSeleccion(null)}>
-          <p className="text-xs text-mutedink">{formatFechaHora(seleccion.created_at)}</p>
-          <button
-            type="button"
-            className="mt-1 text-xs text-accent underline"
-            onClick={() => void abrirHilo(seleccion.thread_id)}
-          >
-            Ver conversación
-          </button>
-          <p className="mt-4 text-xs font-medium text-mutedink">Pregunta</p>
+        <AdminHoja
+          titulo="Respuesta"
+          subtitulo={formatFechaHora(seleccion.created_at)}
+          onCerrar={() => setSeleccion(null)}
+          pie={
+            <button
+              type="button"
+              className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium hover:border-brand hover:text-brand"
+              onClick={() => void abrirHilo(seleccion.thread_id)}
+            >
+              Ver la conversación entera
+            </button>
+          }
+        >
+          <p className="text-xs font-medium text-mutedink">Pregunta</p>
           <p className="mt-1 whitespace-pre-wrap rounded-lg bg-ice px-3 py-2 text-sm">
             {seleccion.user_question || "—"}
           </p>
@@ -392,11 +397,11 @@ export default function AdminChatbotPage() {
               <p className="mt-1 text-sm">{seleccion.notes}</p>
             </>
           )}
-        </Hoja>
+        </AdminHoja>
       )}
 
       {hiloId && (
-        <Hoja titulo="Conversación" onCerrar={() => setHiloId(null)}>
+        <AdminHoja titulo="Conversación" onCerrar={() => setHiloId(null)}>
           <p className="mb-4 text-xs text-mutedink">
             Cada respuesta la califica el revisor. No se puntúa el hilo entero.
           </p>
@@ -430,35 +435,8 @@ export default function AdminChatbotPage() {
               </div>
             ))}
           </div>
-        </Hoja>
+        </AdminHoja>
       )}
-    </div>
-  );
-}
-
-function Hoja({
-  titulo,
-  onCerrar,
-  children,
-}: {
-  titulo: string;
-  onCerrar: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-ink/40" onClick={onCerrar}>
-      <div
-        className="h-full w-full max-w-xl overflow-y-auto bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white px-5 py-4">
-          <h2 className="text-lg font-semibold">{titulo}</h2>
-          <button type="button" onClick={onCerrar} className="rounded-lg p-1.5 hover:bg-soft" aria-label="Cerrar">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
     </div>
   );
 }

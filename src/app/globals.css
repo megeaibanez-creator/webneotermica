@@ -105,6 +105,25 @@
   }
 }
 
+/* Hoja lateral del admin: fundido del fondo + deslizamiento del panel. */
+.admin-hoja-fondo {
+  animation: admin-fundido 0.18s ease-out;
+}
+.admin-hoja {
+  animation: admin-desliza 0.22s ease-out;
+}
+@keyframes admin-fundido {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes admin-desliza {
+  from {
+    transform: translateX(48px);
+    opacity: 0;
+  }
+}
+
 /* Markdown del chatbot (molde Nora / Laura). Fuera de @layer: Tailwind y un reset no se comen las viñetas. */
 .chat-markdown .chat-link {
   color: #cb0a3d;

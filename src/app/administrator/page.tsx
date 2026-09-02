@@ -13,7 +13,6 @@ import {
   Users,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { esEmailAdmin } from "@/lib/site";
 import { getServicio } from "@/lib/servicios";
 import { AdminPildora, formatFechaAdmin } from "@/components/admin/AdminTabla";
 
@@ -116,12 +115,18 @@ export default function AdminHomePage() {
   useEffect(() => {
     const sb = getSupabaseBrowserClient();
     if (sb) {
-      void sb.auth.getUser().then(({ data }) => {
-        if (!data.user || !esEmailAdmin(data.user.email)) {
+      void fetch("/api/staff/me").then(async (r) => {
+        if (!r.ok) {
           router.replace("/administrator/login");
           return;
         }
-        setEmail(data.user.email ?? null);
+        const me = (await r.json()) as { rol?: string; nombre?: string };
+        if (me.rol === "tecnico") {
+          router.replace("/tecnico");
+          return;
+        }
+        const { data } = await sb.auth.getUser();
+        setEmail(data.user?.email ?? me.nombre ?? null);
       });
     } else if (process.env.NODE_ENV === "production") {
       setAviso("Admin pendiente de Auth. Falta el proyecto Supabase.");

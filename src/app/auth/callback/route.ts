@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { esEmailAdmin } from "@/lib/site";
+import { getStaffActual } from "@/lib/staff";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -17,13 +17,12 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/administrator/login?error=oauth`);
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!esEmailAdmin(user?.email)) {
+  const staff = await getStaffActual();
+  if (!staff) {
     await supabase.auth.signOut();
     return NextResponse.redirect(`${origin}/administrator/login?error=noadmin`);
   }
 
-  return NextResponse.redirect(`${origin}/administrator`);
+  const destino = staff.rol === "tecnico" ? "/tecnico" : "/administrator";
+  return NextResponse.redirect(`${origin}${destino}`);
 }

@@ -1,7 +1,17 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
+  X,
+} from "lucide-react";
 
 export type ColumnaTabla<T> = {
   id: string;
@@ -25,8 +35,16 @@ type Props<T> = {
   opcionesFiltro?: { value: string; label: string }[];
   filaActiva?: string | null;
   onFila?: (fila: T) => void;
-  pie?: ReactNode;
+  /* Selección múltiple: si llega onSeleccion sale la columna de checkboxes. */
+  seleccion?: string[];
+  onSeleccion?: (ids: string[]) => void;
+  /* Botones que salen en la barra azul cuando hay filas marcadas. */
+  acciones?: ReactNode;
+  /* Nombre de la cosa para el pie: "consulta", "obra"… */
+  unidad?: [string, string];
 };
+
+const POR_PAGINA = [10, 25, 50, 100];
 
 export function formatFechaAdmin(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -59,6 +77,50 @@ export function AdminPildora({
   );
 }
 
+/* Chip de filtro con recuento (Todos · 12, Nuevo · 3…). */
+export function AdminChip({
+  activo,
+  onClick,
+  children,
+}: {
+  activo: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+        activo
+          ? "bg-brand text-white shadow-card"
+          : "border border-line bg-white text-mutedink hover:border-brand hover:text-brand"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* Botón pequeño para la barra de acciones en lote. */
+export function AdminBotonLote({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-medium hover:border-brand hover:text-brand"
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AdminTabla<T>({
   columnas,
   filas,
@@ -72,9 +134,14 @@ export default function AdminTabla<T>({
   opcionesFiltro,
   filaActiva,
   onFila,
-  pie,
+  seleccion,
+  onSeleccion,
+  acciones,
+  unidad = ["fila", "filas"],
 }: Props<T>) {
   const [orden, setOrden] = useState<{ id: string; dir: "asc" | "desc" } | null>(null);
+  const [porPagina, setPorPagina] = useState(25);
+  const [pagina, setPagina] = useState(1);
 
   const ordenadas = useMemo(() => {
     if (!orden) return filas;
@@ -101,6 +168,23 @@ export default function AdminTabla<T>({
     return copia;
   }, [filas, orden, columnas]);
 
+  // Al cambiar búsqueda, filtro u orden se vuelve a la primera página.
+  useEffect(() => {
+    setPagina(1);
+  }, [busqueda, filtro, orden]);
+
+  const total = ordenadas.length;
+  const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+  const pag = Math.min(pagina, totalPaginas);
+  const desde = total === 0 ? 0 : (pag - 1) * porPagina + 1;
+  const hasta = Math.min(pag * porPagina, total);
+  const enPagina = ordenadas.slice(desde - 1, hasta);
+
+  const selSet = useMemo(() => new Set(seleccion ?? []), [seleccion]);
+  const idsVisibles = useMemo(() => ordenadas.map(clave), [ordenadas, clave]);
+  const todasMarcadas = idsVisibles.length > 0 && idsVisibles.every((id) => selSet.has(id));
+  const algunaMarcada = idsVisibles.some((id) => selSet.has(id));
+
   function toggle(id: string) {
     setOrden((prev) => {
       if (prev?.id === id) return { id, dir: prev.dir === "desc" ? "asc" : "desc" };
@@ -108,7 +192,21 @@ export default function AdminTabla<T>({
     });
   }
 
+  function marcarTodas() {
+    if (!onSeleccion) return;
+    onSeleccion(todasMarcadas ? [] : idsVisibles);
+  }
+
+  function marcarUna(id: string) {
+    if (!onSeleccion) return;
+    const next = new Set(selSet);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSeleccion([...next]);
+  }
+
   const hayBarra = onBusqueda || (onFiltro && opcionesFiltro);
+  const nSel = seleccion?.length ?? 0;
 
   return (
     <div className="space-y-4">
@@ -145,10 +243,40 @@ export default function AdminTabla<T>({
       )}
 
       <div className="admin-card">
+        {onSeleccion && nSel > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-line bg-ice px-4 py-2.5 text-sm">
+            <b className="mr-1 text-brand-dark">
+              {nSel} {nSel === 1 ? unidad[0] : unidad[1]}
+            </b>
+            {acciones}
+            <button
+              type="button"
+              className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-mutedink hover:bg-white"
+              onClick={() => onSeleccion([])}
+            >
+              <X className="h-3.5 w-3.5" /> Quitar selección
+            </button>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-line bg-soft">
               <tr>
+                {onSeleccion && (
+                  <th className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 cursor-pointer accent-brand"
+                      aria-label="Marcar todas"
+                      checked={todasMarcadas}
+                      ref={(el) => {
+                        if (el) el.indeterminate = algunaMarcada && !todasMarcadas;
+                      }}
+                      onChange={marcarTodas}
+                    />
+                  </th>
+                )}
                 {columnas.map((col) => {
                   const align =
                     col.alinear === "center"
@@ -162,6 +290,9 @@ export default function AdminTabla<T>({
                       key={col.id}
                       className={`admin-th ${align} ${col.ordenable ? "cursor-pointer select-none hover:bg-ice" : ""}`}
                       onClick={col.ordenable ? () => toggle(col.id) : undefined}
+                      aria-sort={
+                        activo ? (orden?.dir === "asc" ? "ascending" : "descending") : undefined
+                      }
                     >
                       <span
                         className={`inline-flex items-center gap-1 ${
@@ -190,22 +321,39 @@ export default function AdminTabla<T>({
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {ordenadas.length === 0 ? (
+              {enPagina.length === 0 ? (
                 <tr>
-                  <td colSpan={columnas.length} className="px-4 py-12 text-center text-sm text-mutedink">
+                  <td
+                    colSpan={columnas.length + (onSeleccion ? 1 : 0)}
+                    className="px-4 py-12 text-center text-sm text-mutedink"
+                  >
                     {vacio}
                   </td>
                 </tr>
               ) : (
-                ordenadas.map((fila) => {
+                enPagina.map((fila) => {
                   const id = clave(fila);
                   const activa = filaActiva === id;
+                  const marcada = selSet.has(id);
                   return (
                     <tr
                       key={id}
-                      className={`${onFila ? "cursor-pointer" : ""} ${activa ? "bg-ice" : "hover:bg-soft"}`}
+                      className={`transition-colors ${onFila ? "cursor-pointer" : ""} ${
+                        activa ? "bg-ice" : marcada ? "bg-brand/5 hover:bg-brand/10" : "hover:bg-soft"
+                      }`}
                       onClick={onFila ? () => onFila(fila) : undefined}
                     >
+                      {onSeleccion && (
+                        <td className="w-10 px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 cursor-pointer accent-brand"
+                            aria-label="Marcar fila"
+                            checked={marcada}
+                            onChange={() => marcarUna(id)}
+                          />
+                        </td>
+                      )}
                       {columnas.map((col) => {
                         const align =
                           col.alinear === "center"
@@ -226,10 +374,97 @@ export default function AdminTabla<T>({
             </tbody>
           </table>
         </div>
-        <div className="border-t border-line px-4 py-3 text-sm text-mutedink">
-          {pie ?? `Mostrando ${ordenadas.length} ${ordenadas.length === 1 ? "fila" : "filas"}`}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-sm text-mutedink">
+          <span>
+            {total === 0
+              ? `0 ${unidad[1]}`
+              : total <= porPagina
+                ? `${total} ${total === 1 ? unidad[0] : unidad[1]}`
+                : `${desde}–${hasta} de ${total} ${unidad[1]}`}
+          </span>
+          {total > 10 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-1.5">
+                <select
+                  value={porPagina}
+                  onChange={(e) => {
+                    setPorPagina(Number(e.target.value));
+                    setPagina(1);
+                  }}
+                  className="rounded-lg border border-line bg-white px-2 py-1 text-xs outline-none focus:border-brand"
+                >
+                  {POR_PAGINA.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs">por página</span>
+              </label>
+              {totalPaginas > 1 && (
+                <span className="flex items-center gap-1">
+                  <BotonPagina
+                    onClick={() => setPagina(1)}
+                    disabled={pag === 1}
+                    label="Primera página"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </BotonPagina>
+                  <BotonPagina
+                    onClick={() => setPagina(pag - 1)}
+                    disabled={pag === 1}
+                    label="Página anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </BotonPagina>
+                  <span className="min-w-[4.5rem] text-center text-xs">
+                    Pág. {pag} de {totalPaginas}
+                  </span>
+                  <BotonPagina
+                    onClick={() => setPagina(pag + 1)}
+                    disabled={pag === totalPaginas}
+                    label="Página siguiente"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </BotonPagina>
+                  <BotonPagina
+                    onClick={() => setPagina(totalPaginas)}
+                    disabled={pag === totalPaginas}
+                    label="Última página"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </BotonPagina>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+function BotonPagina({
+  onClick,
+  disabled,
+  label,
+  children,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="rounded-lg border border-line bg-white p-1.5 text-ink transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink"
+    >
+      {children}
+    </button>
   );
 }

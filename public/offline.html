@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#cb0a3d" />
+    <title>Sin conexión — Neotérmica</title>
+    <meta name="robots" content="noindex" />
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        padding: 2rem;
+        text-align: center;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #1b2531;
+        background: #eef1f5;
+      }
+      img { width: 88px; height: 88px; }
+      h1 { font-size: 1.4rem; margin: 0; color: #cb0a3d; }
+      p { margin: 0; max-width: 30rem; color: #3d5c70; line-height: 1.5; }
+      button {
+        margin-top: 0.5rem;
+        border: 0;
+        border-radius: 999px;
+        padding: 0.75rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        background: #cb0a3d;
+        cursor: pointer;
+      }
+      a { color: #cb0a3d; font-weight: 600; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <img src="/icons/icon-192.png" alt="Neotérmica" />
+    <h1>Sin conexión</h1>
+    <p>
+      No hay conexión a internet. El panel necesita red para cargar tus datos.
+      Revisa la conexión e inténtalo de nuevo.
+    </p>
+    <button onclick="location.reload()">Reintentar</button>
+  </body>
+</html>

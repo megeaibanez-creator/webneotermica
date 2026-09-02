@@ -26,7 +26,10 @@ export type Tabla =
   | "clients"
   | "projects"
   | "quotes"
-  | "invoices";
+  | "invoices"
+  | "profiles"
+  | "actuaciones"
+  | "actuacion_responsables";
 
 /** Solo en desarrollo y solo si Supabase no está configurado. */
 export function localDbActivo(): boolean {
