@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import { fotoPortada } from "@/lib/crm";
-import { getServicio } from "@/lib/servicios";
-import {
-  añoDeObra,
-  listarProyectosPublicos,
-  tituloPublico,
-} from "@/lib/proyectos-publicos";
+import TarjetaProyecto from "@/components/proyectos/TarjetaProyecto";
+import { listarProyectosPublicos } from "@/lib/proyectos-publicos";
 
 export const dynamic = "force-dynamic";
 
@@ -62,55 +56,9 @@ export default async function ProyectosPage() {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {proyectos.map((p) => {
-                const portada = fotoPortada(p);
-                const servicio = p.service ? getServicio(p.service) : undefined;
-                return (
-                  <Link
-                    key={p.id}
-                    href={`/proyectos/${p.slug}`}
-                    className="card card-hover group flex flex-col !p-0 no-underline text-inherit"
-                  >
-                    <div className="relative h-48 overflow-hidden rounded-t-[20px] bg-gradient-to-br from-brand-dark to-ink">
-                      {portada && (
-                        <Image
-                          src={portada}
-                          alt={tituloPublico(p)}
-                          fill
-                          sizes="(max-width: 640px) 100vw, 33vw"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col p-6">
-                      <p className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-[0.72rem] uppercase tracking-[0.14em] text-brand">
-                        <span>{añoDeObra(p)}</span>
-                        {servicio && (
-                          <>
-                            <span className="text-mutedink">·</span>
-                            <span>{servicio.nombre}</span>
-                          </>
-                        )}
-                        {p.municipio && (
-                          <>
-                            <span className="text-mutedink">·</span>
-                            <span>{p.municipio}</span>
-                          </>
-                        )}
-                      </p>
-                      <h2 className="mb-2 text-[1.2rem]">{tituloPublico(p)}</h2>
-                      {p.public_excerpt && (
-                        <p className="mb-4 flex-1 text-[0.92rem] text-mutedink">
-                          {p.public_excerpt}
-                        </p>
-                      )}
-                      <span className="mt-auto font-display text-[0.85rem] font-semibold text-accent group-hover:underline">
-                        Ver el proyecto →
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+              {proyectos.map((p) => (
+                <TarjetaProyecto key={p.id} proyecto={p} />
+              ))}
             </div>
           )}
         </div>

@@ -9,7 +9,9 @@ import CarruselPosts from "@/components/blog/CarruselPosts";
 import { SERVICIOS } from "@/lib/servicios";
 import { getPublishedPosts } from "@/lib/blog";
 import { EMPRESA, RESENAS_GOOGLE } from "@/lib/site";
+import TarjetaProyecto from "@/components/proyectos/TarjetaProyecto";
 import { IMG, MARCAS, fotoServicio } from "@/lib/images";
+import { listarProyectosPublicos } from "@/lib/proyectos-publicos";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +31,11 @@ export const metadata: Metadata = {
   },
 };
 
-const PROYECTOS = [IMG.slider1, IMG.slider2, IMG.slider3, IMG.heroServicios, IMG.trayectoria];
-
 export default async function HomePage() {
-  const destacados = (await getPublishedPosts()).slice(0, 3);
+  const [destacados, obras] = await Promise.all([
+    getPublishedPosts().then((posts) => posts.slice(0, 3)),
+    listarProyectosPublicos().then((lista) => lista.slice(0, 3)),
+  ]);
 
   return (
     <>
@@ -261,31 +264,28 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 7 · PROYECTOS */}
-      <section className="py-20">
-        <div className="container-site">
-          <p className="eyebrow">Obra hecha</p>
-          <h2 className="h-sec">Últimos proyectos de climatización</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
-            {PROYECTOS.map((src, i) => (
-              <div
-                key={`${src}-${i}`}
-                className={`relative min-h-[200px] overflow-hidden rounded-[20px] shadow-card ${
-                  i === 0 ? "lg:col-span-2 lg:row-span-2" : ""
-                }`}
+      {/* 7 · PROYECTOS — mismas fichas que /proyectos */}
+      {obras.length > 0 && (
+        <section className="py-20">
+          <div className="container-site">
+            <p className="eyebrow">Obra hecha</p>
+            <h2 className="h-sec">Últimos proyectos de climatización</h2>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {obras.map((p) => (
+                <TarjetaProyecto key={p.id} proyecto={p} tituloComo="h3" />
+              ))}
+            </div>
+            <p className="mt-8 text-center">
+              <Link
+                href="/proyectos"
+                className="font-semibold text-brand hover:text-accent"
               >
-                <Image
-                  src={src}
-                  alt="Instalación de climatización realizada por Neotérmica"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
-            ))}
+                Ver todos los proyectos
+              </Link>
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 8 · OPINIONES */}
       <section className="bg-soft py-20">
