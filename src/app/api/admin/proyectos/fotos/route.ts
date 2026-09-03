@@ -7,6 +7,8 @@ import {
   type FotoFase,
   type Project,
   type ProjectPhoto,
+  esSrcFotoObra,
+  rutaStorageFotoObra,
   normalizarProyecto,
 } from "@/lib/crm";
 import { actualizarLocal, leerLocal, localDbActivo } from "@/lib/db/local";
@@ -21,6 +23,8 @@ const TIPOS: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
+const BUCKET = "blog";
+const MAX_BYTES = 5 * 1024 * 1024;
 
 function dirObra(id: string): string {
   return path.join(process.cwd(), "public", "uploads", "proyectos", id);
@@ -48,6 +52,44 @@ async function guardarFotos(id: string, photos: ProjectPhoto[]): Promise<string 
   return null;
 }
 
+async function subirArchivo(
+  id: string,
+  nombre: string,
+  buf: Buffer,
+  contentType: string
+): Promise<string> {
+  const supabase = getSupabaseAdmin();
+  if (supabase) {
+    const dest = `proyectos/${id}/${nombre}`;
+    const { error } = await supabase.storage.from(BUCKET).upload(dest, buf, {
+      contentType,
+      upsert: false,
+      cacheControl: "2592000",
+    });
+    if (error) throw new Error(error.message);
+    const url = supabase.storage.from(BUCKET).getPublicUrl(dest).data.publicUrl;
+    return `${url}?v=${Date.now()}`;
+  }
+  const destDir = dirObra(id);
+  fs.mkdirSync(destDir, { recursive: true });
+  fs.writeFileSync(path.join(destDir, nombre), buf);
+  return `/uploads/proyectos/${id}/${nombre}`;
+}
+
+async function borrarArchivo(src: string): Promise<void> {
+  const ruta = rutaStorageFotoObra(src);
+  const supabase = getSupabaseAdmin();
+  if (ruta && supabase) {
+    await supabase.storage.from(BUCKET).remove([ruta]);
+    return;
+  }
+  if (!src.startsWith("/uploads/proyectos/")) return;
+  const rel = src.replace(/^\//, "");
+  const corte = rel.indexOf("?");
+  const abs = path.join(process.cwd(), "public", corte === -1 ? rel : rel.slice(0, corte));
+  if (fs.existsSync(abs)) fs.unlinkSync(abs);
+}
+
 export async function POST(request: Request) {
   const corte = await exigirAdmin();
   if (corte) return corte;
@@ -64,8 +106,8 @@ export async function POST(request: Request) {
   if (!ext) {
     return NextResponse.json({ error: "Solo jpg, png o webp." }, { status: 400 });
   }
-  if (file.size > 8 * 1024 * 1024) {
-    return NextResponse.json({ error: "La foto no puede pasar de 8 MB." }, { status: 400 });
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: "La foto no puede pasar de 5 MB." }, { status: 400 });
   }
 
   const obra = await leerObra(id);
@@ -73,11 +115,15 @@ export async function POST(request: Request) {
 
   const buf = Buffer.from(await file.arrayBuffer());
   const nombre = `${randomUUID()}.${ext}`;
-  const destDir = dirObra(id);
-  fs.mkdirSync(destDir, { recursive: true });
-  fs.writeFileSync(path.join(destDir, nombre), buf);
+  let src: string;
+  try {
+    src = await subirArchivo(id, nombre, buf, file.type);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "No se pudo subir.";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 
-  const foto: ProjectPhoto = { src: `/uploads/proyectos/${id}/${nombre}`, fase };
+  const foto: ProjectPhoto = { src, fase };
   const photos = [...obra.photos, foto];
   const err = await guardarFotos(id, photos);
   if (err) return NextResponse.json({ error: err }, { status: 500 });
@@ -91,15 +137,17 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id") ?? "";
   const src = url.searchParams.get("src") ?? "";
-  if (!id || !src.startsWith(`/uploads/proyectos/${id}/`)) {
+  if (!id || !src || !esSrcFotoObra(src)) {
     return NextResponse.json({ error: "Foto no válida." }, { status: 400 });
   }
 
   const obra = await leerObra(id);
   if (!obra) return NextResponse.json({ error: "Esa obra no existe." }, { status: 404 });
+  if (!obra.photos.some((f) => f.src === src)) {
+    return NextResponse.json({ error: "Esa foto no es de esta obra." }, { status: 400 });
+  }
 
-  const abs = path.join(process.cwd(), "public", src.replace(/^\//, ""));
-  if (fs.existsSync(abs)) fs.unlinkSync(abs);
+  await borrarArchivo(src);
 
   const photos = obra.photos.filter((f) => f.src !== src);
   const err = await guardarFotos(id, photos);

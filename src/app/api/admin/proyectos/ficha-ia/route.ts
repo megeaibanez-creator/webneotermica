@@ -2,18 +2,49 @@ import fs from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { exigirAdmin } from "@/lib/admin";
-import { type Project, normalizarProyecto } from "@/lib/crm";
+import {
+  type Project,
+  type ProjectPhoto,
+  normalizarProyecto,
+  slugUnico,
+} from "@/lib/crm";
 import { actualizarLocal, leerLocal, localDbActivo } from "@/lib/db/local";
 import { getServicio } from "@/lib/servicios";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 function mimeDe(src: string): string {
   if (src.endsWith(".png")) return "image/png";
   if (src.endsWith(".webp")) return "image/webp";
   return "image/jpeg";
+}
+
+function sinQuery(src: string): string {
+  const i = src.indexOf("?");
+  return i === -1 ? src : src.slice(0, i);
+}
+
+type ParteVision =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
+function partesDeFoto(foto: ProjectPhoto): ParteVision[] {
+  const limpio = sinQuery(foto.src);
+  if (limpio.startsWith("https://")) {
+    return [{ type: "image_url", image_url: { url: limpio } }];
+  }
+  const abs = path.join(process.cwd(), "public", limpio.replace(/^\//, ""));
+  if (!fs.existsSync(abs)) return [];
+  const b64 = fs.readFileSync(abs).toString("base64");
+  return [
+    {
+      type: "image_url",
+      image_url: { url: `data:${mimeDe(limpio)};base64,${b64}` },
+    },
+  ];
 }
 
 export async function POST(request: Request) {
@@ -29,13 +60,18 @@ export async function POST(request: Request) {
   if (!body.id) return NextResponse.json({ error: "Falta la obra." }, { status: 400 });
 
   let obra: Project | null = null;
+  let existentes: { id: string; slug?: string | null }[] = [];
   const supabase = getSupabaseAdmin();
   if (supabase) {
     const { data } = await supabase.from("projects").select("*").eq("id", body.id).maybeSingle();
     obra = data ? normalizarProyecto(data as Project) : null;
+    const { data: lista } = await supabase.from("projects").select("id, slug");
+    existentes = (lista ?? []) as { id: string; slug?: string | null }[];
   } else if (localDbActivo()) {
-    const fila = leerLocal<Project>("projects").find((p) => p.id === body.id);
+    const filas = leerLocal<Project>("projects");
+    const fila = filas.find((p) => p.id === body.id);
     obra = fila ? normalizarProyecto(fila) : null;
+    existentes = filas;
   }
   if (!obra) return NextResponse.json({ error: "Esa obra no existe." }, { status: 404 });
 
@@ -44,22 +80,13 @@ export async function POST(request: Request) {
     `Tipo de instalación: ${oficio}`,
     obra.m2 ? `Superficie: ${obra.m2} m²` : null,
     obra.municipio ? `Municipio: ${obra.municipio}` : null,
+    obra.title ? `Título interno de la obra: ${obra.title}` : null,
     obra.notes ? `Notas de oficio (sin datos personales): ${obra.notes}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
-  const imagenes = obra.photos.slice(0, 4).flatMap((foto) => {
-    const abs = path.join(process.cwd(), "public", foto.src.replace(/^\//, ""));
-    if (!fs.existsSync(abs)) return [];
-    const b64 = fs.readFileSync(abs).toString("base64");
-    return [
-      {
-        type: "image_url" as const,
-        image_url: { url: `data:${mimeDe(foto.src)};base64,${b64}` },
-      },
-    ];
-  });
+  const imagenes = obra.photos.slice(0, 4).flatMap(partesDeFoto);
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -120,7 +147,14 @@ export async function POST(request: Request) {
   const public_title = parsed.public_title?.trim() || obra.title;
   const public_excerpt = parsed.public_excerpt?.trim() || null;
   const public_body = parsed.public_body?.trim() || null;
-  const cambios = { public_title, public_excerpt, public_body };
+  const slug = obra.slug || slugUnico(public_title, existentes, obra.id);
+  const cambios = {
+    public_title,
+    public_excerpt,
+    public_body,
+    publicable: true,
+    slug,
+  };
 
   if (supabase) {
     const { error } = await supabase.from("projects").update(cambios).eq("id", obra.id);
@@ -129,5 +163,9 @@ export async function POST(request: Request) {
     actualizarLocal("projects", obra.id, cambios);
   }
 
-  return NextResponse.json({ ok: true, ...cambios });
+  return NextResponse.json({
+    ok: true,
+    ...cambios,
+    url: `/proyectos/${slug}`,
+  });
 }

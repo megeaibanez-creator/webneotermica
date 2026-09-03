@@ -57,8 +57,10 @@ rellena el form →  Lead (consulta) → Cliente real    → Obra (project)     
 
 1. **Lead** (`contact_submissions`): cualquiera que rellena `/contacto`. Solo una consulta. Se gestiona en `/administrator/contactos` y **no se borra**.
 2. **Pasar a cliente**: botón en la ficha del lead (`pasarACliente`, `src/app/administrator/contactos/page.tsx` → `POST /api/admin/crm` con `from_lead_id`). Copia nombre/mail/tel/municipio y enlaza `lead_id ↔ client_id`. Marca el lead como `replied`.
-3. **Obra** (`projects`): se crea dentro de la ficha del cliente.
-4. **Actuación** (`actuaciones`): fase de una obra. Desde la ficha de la obra, botón **"+ Nueva actuación"** → `/administrator/agenda?obra=ID`. También desde la agenda directamente.
+3. **Obra** (`projects`): se crea dentro de la ficha del cliente (o en `/administrator/proyectos`). Datos de oficio: título, servicio, municipio, m², notas. El importe es interno y **no** sale a la calle.
+4. **Fotos**: en la misma ficha, mientras avanza el trabajo (fases antes / durante / después). Van a Storage `blog/proyectos/{id}/`.
+5. **Ficha pública**: botón **Redactar ficha con IA** (`POST /api/admin/proyectos/ficha-ia`). Coge datos + fotos, escribe título/entradilla/cuerpo (sin cliente ni precio) y publica en `/proyectos/{slug}`. Se puede editar o despublicar.
+6. **Actuación** (`actuaciones`): fase de una obra. Desde la ficha de la obra, botón **"+ Nueva actuación"** → `/administrator/agenda?obra=ID`. También desde la agenda directamente.
 
 Presupuestos y facturas cuelgan igual del cliente/obra (`quotes`, `invoices`).
 
@@ -91,6 +93,8 @@ Multiusuario desde el arranque. El rol vive en `profiles` (`rol` + `es_tecnico`)
 | Endpoint | Quién | Qué |
 |---|---|---|
 | `GET/POST/PATCH /api/admin/agenda` | admin | CRUD de actuaciones + proyectos, clientes y técnicos asignables. |
+| `POST/DELETE /api/admin/proyectos/fotos` | admin | Subir/quitar fotos de obra (Storage `blog/proyectos/{id}/`). |
+| `POST /api/admin/proyectos/ficha-ia` | admin | Redacta la ficha pública y la publica en `/proyectos/{slug}`. |
 | `GET/PATCH /api/tecnico/agenda` | técnico | Solo sus actuaciones; edita **estado** y **notas**, nada más. |
 | `GET/POST/PATCH /api/admin/equipo` | admin | Gestión de `profiles` (alta en Auth + fila). |
 | `GET /api/staff/me` | sesión | Rol actual (`admin`/`tecnico`, `es_tecnico`). |
@@ -138,7 +142,7 @@ Ref `roxsbwhqhqvajvfszeue`. Migraciones `0001` → `0008` aplicadas. Auth multiu
 |---|---|---|
 | `contact_submissions` | Lead del form: nombre, mail, tel, particular/pro, empresa, municipio, oficio, rango de presupuesto, origen, mensaje, GDPR, estado, spam | `/administrator/contactos` · Pasar a cliente |
 | `clients` | Quien contrata (puede venir de un lead) | `/administrator/clientes` |
-| `projects` | Obra: título, oficio, municipio, estado, notas. Extra 0004: m², importe, fotos, publicable, textos de ficha | `/administrator/proyectos` · el formulario **aún no** pide m²/fotos/ficha |
+| `projects` | Obra: título, oficio, municipio, estado, notas, m², importe interno, fotos, publicable, textos de ficha | `/administrator/proyectos` · fotos + **Redactar ficha con IA** |
 | `quotes` | Oferta del taller (`PRE-año-001`), no el rango del form | `/administrator/presupuestos` |
 | `invoices` | Factura (`FAC-año-001`) | `/administrator/facturacion` |
 | `profiles` | Usuario del taller: `nombre`, `rol` (`admin`/`tecnico`), `es_tecnico`, `color`, `telefono`, `activo` | `/administrator/equipo` |
@@ -149,7 +153,7 @@ Ref `roxsbwhqhqvajvfszeue`. Migraciones `0001` → `0008` aplicadas. Auth multiu
 | `chatbot_kb` | Embeddings (landings + blog). Postgres + `vector` | no hay tabla en el admin |
 | `blog_articles` | Posts públicos + cola. Portadas en Storage `blog/covers` | `/administrator/blog` |
 
-**No va en Git:** portadas del blog (viven en Storage `blog/covers`). Fotos de obras: `public/uploads/` (local).
+**No va en Git:** portadas del blog (viven en Storage `blog/covers`). Fotos de obras: mismo bucket, prefijo `blog/proyectos/{id}/`. En local sin Supabase, `public/uploads/` (gitignored).
 
 Huecos: `chatbot_kb` no funciona en `.data`. El panel de chat ya es el molde Andrea: Respuestas + Conversaciones; califica el revisor, no el admin. Fotos en el form de contacto: **más adelante**, no ahora.
 

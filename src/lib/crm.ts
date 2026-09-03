@@ -29,6 +29,37 @@ export type ProjectPhoto = {
   fase: FotoFase;
 };
 
+const MARCA_STORAGE = "/storage/v1/object/public/blog/proyectos/";
+
+function sinQuery(src: string): string {
+  const i = src.indexOf("?");
+  return i === -1 ? src : src.slice(0, i);
+}
+
+/** Foto de obra: disco local o URL pública del bucket `blog/proyectos/{id}/`. */
+export function esSrcFotoObra(src: string, projectId?: string): boolean {
+  const limpio = sinQuery(src);
+  if (limpio.startsWith("/uploads/proyectos/")) {
+    return !projectId || limpio.startsWith(`/uploads/proyectos/${projectId}/`);
+  }
+  if (!limpio.startsWith("https://") || !limpio.includes(MARCA_STORAGE)) return false;
+  return !projectId || limpio.includes(`${MARCA_STORAGE}${projectId}/`);
+}
+
+/** Ruta dentro del bucket `blog`, o null si no es Storage. */
+export function rutaStorageFotoObra(src: string): string | null {
+  const limpio = sinQuery(src);
+  const marca = "/storage/v1/object/public/blog/";
+  const i = limpio.indexOf(marca);
+  if (i === -1) return null;
+  const ruta = limpio.slice(i + marca.length);
+  try {
+    return decodeURIComponent(ruta);
+  } catch {
+    return ruta;
+  }
+}
+
 export type Project = {
   id: string;
   created_at: string;
@@ -125,7 +156,7 @@ export const COPY_CRM: Record<
   },
   projects: {
     titulo: "Proyectos",
-    texto: "Obras e instalaciones. Van ligados a un cliente. Si marcas publicable, salen en /proyectos (sin precio ni nombre).",
+    texto: "Obras e instalaciones. Van ligados a un cliente. Subes fotos del trabajo; la IA redacta la ficha (sin precio ni nombre) y sale en /proyectos.",
     alta: "Nuevo proyecto",
   },
   quotes: {

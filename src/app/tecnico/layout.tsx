@@ -14,7 +14,10 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Neotérmica",
   },
-  icons: { apple: "/icons/apple-touch-icon.png" },
+  icons: {
+    icon: "/favicon.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

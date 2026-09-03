@@ -8,10 +8,13 @@ import {
   ESTADOS_FACTURA,
   ESTADOS_PRESUPUESTO,
   ESTADOS_PROYECTO,
+  FASES_FOTO,
   type Client,
   type EntidadCrm,
+  type FotoFase,
   type Invoice,
   type Project,
+  type ProjectPhoto,
   type Quote,
   type SnapshotCrm,
   etiquetaEstado,
@@ -244,9 +247,11 @@ export default function CrmLista({ entidad, inicialId, inicialCliente }: Props) 
         <AdminHoja
           titulo={tituloFicha(entidad, selected)}
           subtitulo={formatFechaAdmin((selected as { created_at?: string }).created_at)}
+          ancho={entidad === "projects" ? "max-w-2xl" : "max-w-xl"}
           onCerrar={() => setSelectedId(null)}
         >
           <Ficha
+            key={selected.id}
             entidad={entidad}
             fila={selected}
             snap={snap}
@@ -403,6 +408,19 @@ function columnasDe(entidad: EntidadCrm, snap: SnapshotCrm): ColumnaTabla<{ id: 
         ordenable: true,
         valor: (f) => (f as Project).status,
         celda: (f) => pildoraEstado("projects", (f as Project).status),
+      },
+      {
+        id: "web",
+        titulo: "Web",
+        valor: (f) => ((f as Project).publicable ? "1" : "0"),
+        celda: (f) => {
+          const p = f as Project;
+          if (p.publicable && p.slug) {
+            return <AdminPildora tono="ok">En /proyectos</AdminPildora>;
+          }
+          const n = p.photos?.length ?? 0;
+          return n > 0 ? <AdminPildora tono="muted">{n} foto{n === 1 ? "" : "s"}</AdminPildora> : "—";
+        },
       },
       {
         id: "created_at",
@@ -645,6 +663,8 @@ function Ficha({
           onSubmit={(datos) => void patch(datos)}
           etiqueta="Guardar obra"
         />
+        <FotosObra obra={p} onCambio={onCambio} />
+        <FichaPublica obra={p} onGuardar={(datos) => void patch(datos)} onCambio={onCambio} />
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/administrator/agenda?obra=${p.id}`}
@@ -1038,13 +1058,17 @@ function CamposProyecto({
   const [municipio, setMunicipio] = useState(inicial?.municipio ?? "");
   const [status, setStatus] = useState(inicial?.status ?? "previsto");
   const [notes, setNotes] = useState(inicial?.notes ?? "");
+  const [m2, setM2] = useState(inicial?.m2 != null ? String(inicial.m2).replace(".", ",") : "");
+  const [amount, setAmount] = useState(
+    inicial?.amount != null ? String(inicial.amount).replace(".", ",") : ""
+  );
 
   return (
     <form
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ client_id: clientId, title, service, municipio, status, notes });
+        onSubmit({ client_id: clientId, title, service, municipio, status, notes, m2, amount });
       }}
     >
       <SelectCliente snap={snap} value={clientId} onChange={setClientId} />
@@ -1082,11 +1106,293 @@ function CamposProyecto({
         </select>
       </label>
       <label className="block">
+        <span className="field-label">Superficie (m²)</span>
+        <input
+          className="field-input"
+          inputMode="decimal"
+          placeholder="100"
+          value={m2}
+          onChange={(e) => setM2(e.target.value)}
+        />
+      </label>
+      <label className="block">
+        <span className="field-label">Importe interno (€)</span>
+        <input
+          className="field-input"
+          inputMode="decimal"
+          placeholder="No sale en la web"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <span className="mt-1 block text-xs text-mutedink">Solo para el taller. La ficha pública no lo enseña.</span>
+      </label>
+      <label className="block">
         <span className="field-label">Notas</span>
         <textarea className="field-input" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </label>
       <Acciones etiqueta={etiqueta} onCancelar={onCancelar} />
     </form>
+  );
+}
+
+async function comprimirParaSubida(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.size < 3 * 1024 * 1024) return file;
+  const bmp = await createImageBitmap(file);
+  const max = 1920;
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * scale);
+  const h = Math.round(bmp.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bmp, 0, 0, w, h);
+  const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.\w+$/i, ".jpg"), { type: "image/jpeg" });
+}
+
+function FotosObra({ obra, onCambio }: { obra: Project; onCambio: () => void }) {
+  const [fase, setFase] = useState<FotoFase>("durante");
+  const [aviso, setAviso] = useState("");
+  const [subiendo, setSubiendo] = useState(false);
+
+  async function subir(lista: FileList | null) {
+    if (!lista?.length) return;
+    setAviso("");
+    setSubiendo(true);
+    try {
+      for (const original of Array.from(lista)) {
+        const file = await comprimirParaSubida(original);
+        const form = new FormData();
+        form.append("project_id", obra.id);
+        form.append("fase", fase);
+        form.append("file", file);
+        const res = await fetch("/api/admin/proyectos/fotos", { method: "POST", body: form });
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          setAviso(data.error ?? "No se pudo subir la foto.");
+          break;
+        }
+      }
+      onCambio();
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  async function borrar(src: string) {
+    setAviso("");
+    const res = await fetch(
+      `/api/admin/proyectos/fotos?id=${encodeURIComponent(obra.id)}&src=${encodeURIComponent(src)}`,
+      { method: "DELETE" }
+    );
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      setAviso(data.error ?? "No se pudo borrar.");
+      return;
+    }
+    onCambio();
+  }
+
+  async function cambiarFase(src: string, nueva: FotoFase) {
+    const photos: ProjectPhoto[] = obra.photos.map((f) => (f.src === src ? { ...f, fase: nueva } : f));
+    const res = await fetch("/api/admin/crm", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entidad: "projects", id: obra.id, photos }),
+    });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      setAviso(data.error ?? "No se pudo cambiar la fase.");
+      return;
+    }
+    onCambio();
+  }
+
+  return (
+    <div className="space-y-3 border-t border-line pt-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-mutedink">Fotos del trabajo</p>
+      <p className="text-xs text-mutedink">
+        Mientras avanza la obra. La IA las usa al redactar la ficha. No sale el cliente ni el precio.
+      </p>
+      {aviso && <p className="text-accent">{aviso}</p>}
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="block min-w-[8rem]">
+          <span className="field-label">Fase</span>
+          <select
+            className="field-input"
+            value={fase}
+            onChange={(e) => setFase(e.target.value as FotoFase)}
+          >
+            {FASES_FOTO.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Añadir fotos</span>
+          <input
+            className="field-input text-sm file:mr-2 file:rounded-full file:border-0 file:bg-brand file:px-3 file:py-1 file:text-xs file:font-medium file:text-white"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            disabled={subiendo}
+            onChange={(e) => {
+              void subir(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+      {subiendo && <p className="text-xs text-mutedink">Subiendo…</p>}
+      {obra.photos.length === 0 ? (
+        <p className="text-mutedink">Aún no hay fotos en esta obra.</p>
+      ) : (
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {obra.photos.map((foto) => (
+            <li key={foto.src} className="space-y-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={foto.src}
+                alt={FASES_FOTO.find((f) => f.value === foto.fase)?.label ?? "Foto"}
+                className="aspect-[4/3] w-full rounded-xl border border-line object-cover"
+              />
+              <select
+                className="field-input text-xs"
+                value={foto.fase}
+                onChange={(e) => void cambiarFase(foto.src, e.target.value as FotoFase)}
+              >
+                {FASES_FOTO.map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="text-xs text-accent underline"
+                onClick={() => void borrar(foto.src)}
+              >
+                Quitar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function FichaPublica({
+  obra,
+  onGuardar,
+  onCambio,
+}: {
+  obra: Project;
+  onGuardar: (datos: Record<string, unknown>) => void;
+  onCambio: () => void;
+}) {
+  const [title, setTitle] = useState(obra.public_title ?? "");
+  const [excerpt, setExcerpt] = useState(obra.public_excerpt ?? "");
+  const [body, setBody] = useState(obra.public_body ?? "");
+  const [publicable, setPublicable] = useState(obra.publicable);
+  const [ia, setIa] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [url, setUrl] = useState(obra.slug ? `/proyectos/${obra.slug}` : "");
+
+  async function redactar() {
+    setAviso("");
+    setIa(true);
+    const res = await fetch("/api/admin/proyectos/ficha-ia", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: obra.id }),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      public_title?: string;
+      public_excerpt?: string;
+      public_body?: string;
+      url?: string;
+    };
+    setIa(false);
+    if (!res.ok) {
+      setAviso(data.error ?? "No se pudo redactar.");
+      return;
+    }
+    setTitle(data.public_title ?? "");
+    setExcerpt(data.public_excerpt ?? "");
+    setBody(data.public_body ?? "");
+    setPublicable(true);
+    setUrl(data.url ?? "");
+    onCambio();
+  }
+
+  return (
+    <div className="space-y-3 border-t border-line pt-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-mutedink">Ficha pública</p>
+      <p className="text-xs text-mutedink">
+        Cuando la obra esté lista, la IA redacta el texto con los datos y las fotos. Sale en /proyectos
+        sin precio ni nombre del cliente.
+      </p>
+      {aviso && <p className="text-accent">{aviso}</p>}
+      <button
+        type="button"
+        className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        disabled={ia}
+        onClick={() => void redactar()}
+      >
+        {ia ? "Redactando…" : "Redactar ficha con IA"}
+      </button>
+      {obra.photos.length === 0 && (
+        <p className="text-xs text-mutedink">Sin fotos aún: el texto saldrá más genérico.</p>
+      )}
+      <label className="block">
+        <span className="field-label">Título en la web</span>
+        <input className="field-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+      </label>
+      <label className="block">
+        <span className="field-label">Entradilla</span>
+        <textarea className="field-input" rows={2} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+      </label>
+      <label className="block">
+        <span className="field-label">Cuerpo (HTML)</span>
+        <textarea className="field-input font-mono text-xs" rows={8} value={body} onChange={(e) => setBody(e.target.value)} />
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={publicable}
+          onChange={(e) => setPublicable(e.target.checked)}
+        />
+        <span>Publicar en /proyectos</span>
+      </label>
+      {url && publicable && (
+        <p>
+          <a href={url} target="_blank" rel="noreferrer" className="text-accent underline">
+            Ver en la web{obra.slug ? ` · ${obra.slug}` : ""}
+          </a>
+        </p>
+      )}
+      <button
+        type="button"
+        className="rounded-full border border-line px-4 py-2 text-sm"
+        onClick={() =>
+          onGuardar({
+            public_title: title,
+            public_excerpt: excerpt,
+            public_body: body,
+            publicable,
+          })
+        }
+      >
+        Guardar ficha pública
+      </button>
+    </div>
   );
 }
 

@@ -1,7 +1,8 @@
 /**
  * DEMO de una pasada: 3 obras ficticias publicables para ver /proyectos.
  * Texto inventado (aquí, no LLM). Fotos con gpt-image-2 (OPENAI_API_KEY de .env.local).
- * Van a Supabase (projects) + public/uploads/proyectos/{id}/ (gitignored, solo local).
+ * Van a Supabase (projects) + Storage bucket `blog`, prefijo `proyectos/{slug}/`
+ * (público, igual que las portadas del blog → se ven en producción).
  *
  *   node scripts/seed-proyectos-demo.mjs          → crea cliente demo + 3 obras + fotos
  *   node scripts/seed-proyectos-demo.mjs --clean   → borra las obras demo, el cliente y sus fotos
@@ -132,22 +133,20 @@ Instalación limpia y certificada, hecha en una jornada y con el despacho operat
   },
 ];
 
-function dirObra(id) {
-  return path.join(root, "public", "uploads", "proyectos", id);
-}
-
 async function clean() {
   const slugs = OBRAS.map((o) => o.slug);
-  const { data: obras } = await sb.from("projects").select("id, slug").in("slug", slugs);
-  for (const o of obras ?? []) {
-    fs.rmSync(dirObra(o.id), { recursive: true, force: true });
+  for (const slug of slugs) {
+    const { data: files } = await sb.storage.from("blog").list(`proyectos/${slug}`);
+    if (files?.length) {
+      await sb.storage.from("blog").remove(files.map((f) => `proyectos/${slug}/${f.name}`));
+    }
   }
   await sb.from("projects").delete().in("slug", slugs);
   await sb.from("clients").delete().eq("name", CLIENTE_DEMO);
-  console.log(`Limpiado: ${obras?.length ?? 0} obra(s) demo + cliente + fotos.`);
+  console.log(`Limpiado: ${slugs.length} obra(s) demo + cliente + fotos de Storage.`);
 }
 
-async function generarFoto(prompt, dest) {
+async function generarFoto(prompt) {
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { Authorization: `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
@@ -164,7 +163,19 @@ async function generarFoto(prompt, dest) {
   if (!res.ok) throw new Error(`${res.status} ${raw.slice(0, 300)}`);
   const b64 = JSON.parse(raw).data?.[0]?.b64_json;
   if (!b64) throw new Error("sin b64_json");
-  fs.writeFileSync(dest, Buffer.from(b64, "base64"));
+  return Buffer.from(b64, "base64");
+}
+
+// Sube la foto al bucket público `blog` (mismo que las portadas) bajo proyectos/{slug}/.
+async function subirFoto(slug, i, buf) {
+  const dest = `proyectos/${slug}/foto-${i}.jpg`;
+  const { error } = await sb.storage.from("blog").upload(dest, buf, {
+    contentType: "image/jpeg",
+    upsert: true,
+    cacheControl: "2592000",
+  });
+  if (error) throw new Error(`Storage: ${error.message}`);
+  return `${sb.storage.from("blog").getPublicUrl(dest).data.publicUrl}?v=${Date.now()}`;
 }
 
 async function seed() {
@@ -220,17 +231,15 @@ async function seed() {
     if (error) throw error;
     const id = fila.id;
 
-    const carpeta = dirObra(id);
-    fs.mkdirSync(carpeta, { recursive: true });
     const photos = [];
     let i = 0;
     for (const foto of obra.fotos) {
       i += 1;
-      const nombre = `foto-${i}.jpg`;
-      process.stdout.write(`  ${obra.slug} · ${nombre} (${foto.fase})… `);
+      process.stdout.write(`  ${obra.slug} · foto-${i} (${foto.fase})… `);
       try {
-        await generarFoto(foto.prompt, path.join(carpeta, nombre));
-        photos.push({ src: `/uploads/proyectos/${id}/${nombre}`, fase: foto.fase });
+        const buf = await generarFoto(foto.prompt);
+        const src = await subirFoto(obra.slug, i, buf);
+        photos.push({ src, fase: foto.fase });
         console.log("OK");
       } catch (e) {
         console.log("ERROR", String(e.message || e));

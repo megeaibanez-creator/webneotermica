@@ -12,6 +12,7 @@ import {
   parseM2,
   slugUnico,
   siguienteNumero,
+  esSrcFotoObra,
   type FotoFase,
   type ProjectPhoto,
 } from "@/lib/crm";
@@ -35,7 +36,7 @@ function fotosDe(v: unknown): ProjectPhoto[] | undefined {
     if (!item || typeof item !== "object") return [];
     const src = texto((item as { src?: unknown }).src);
     const fase = (item as { fase?: unknown }).fase;
-    if (!src || !src.startsWith("/uploads/proyectos/")) return [];
+    if (!src || !esSrcFotoObra(src)) return [];
     if (typeof fase !== "string" || !FASES.includes(fase as FotoFase)) return [];
     return [{ src, fase: fase as FotoFase }];
   });
