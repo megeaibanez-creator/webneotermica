@@ -12,8 +12,15 @@ export async function getSupabaseServerClient() {
   if (!url || !anonKey) return null;
 
   const cookieStore = await cookies();
+  const persist = cookieStore.get("neotermica_admin_remember")?.value !== "0";
+  const cookieOptions = {
+    path: "/",
+    sameSite: "lax" as const,
+    ...(persist ? { maxAge: 60 * 60 * 24 * 30 } : {}),
+  };
 
   return createServerClient(url, anonKey, {
+    cookieOptions,
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -21,7 +28,7 @@ export async function getSupabaseServerClient() {
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
+            cookieStore.set(name, value, { ...options, ...cookieOptions });
           });
         } catch {
           // Llamado desde un Server Component: se puede ignorar si hay proxy refrescando sesión.

@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  ADMIN_SESSION_MAX_AGE,
+  K_ADMIN_REMEMBER,
+  getSupabaseBrowserClient,
+} from "@/lib/supabase/client";
 
 const K_EMAIL = "neotermica_admin_email";
-const K_REMEMBER = "neotermica_admin_remember";
 
 function mensajeError(raw: string): string {
   const t = raw.toLowerCase();
@@ -42,7 +45,7 @@ export default function AdminLoginPage() {
     try {
       const guardado = localStorage.getItem(K_EMAIL);
       if (guardado) setEmail(guardado);
-      const rec = localStorage.getItem(K_REMEMBER);
+      const rec = localStorage.getItem(K_ADMIN_REMEMBER);
       if (rec === "0") setRecuerdame(false);
     } catch {
       // sin storage
@@ -52,8 +55,22 @@ export default function AdminLoginPage() {
       if (q === "oauth") setError("No se ha podido entrar con Google.");
       if (q === "noadmin") setError("Esa cuenta de Google no es administradora.");
     }
-    setListo(true);
-  }, []);
+
+    void fetch("/api/staff/me")
+      .then(async (r) => {
+        if (!r.ok) {
+          setListo(true);
+          return;
+        }
+        const me = (await r.json()) as { rol?: string };
+        if (me?.rol) {
+          router.replace(me.rol === "tecnico" ? "/tecnico" : "/administrator");
+          return;
+        }
+        setListo(true);
+      })
+      .catch(() => setListo(true));
+  }, [router]);
 
   if (!supabaseOk) {
     return (
@@ -80,18 +97,23 @@ export default function AdminLoginPage() {
 
   function guardarPreferencias(mail: string, remember: boolean) {
     try {
-      localStorage.setItem(K_REMEMBER, remember ? "1" : "0");
+      localStorage.setItem(K_ADMIN_REMEMBER, remember ? "1" : "0");
       if (remember) localStorage.setItem(K_EMAIL, mail);
       else localStorage.removeItem(K_EMAIL);
     } catch {
       // ignore
     }
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = remember
+      ? `${K_ADMIN_REMEMBER}=1; Path=/; Max-Age=${ADMIN_SESSION_MAX_AGE}; SameSite=Lax${secure}`
+      : `${K_ADMIN_REMEMBER}=0; Path=/; SameSite=Lax${secure}`;
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading("mail");
+    guardarPreferencias(email, recuerdame);
     const sb = getSupabaseBrowserClient({ persistSession: recuerdame });
     if (!sb) {
       setLoading(null);
@@ -113,7 +135,6 @@ export default function AdminLoginPage() {
       setError("Esta cuenta no tiene acceso al panel.");
       return;
     }
-    guardarPreferencias(email, recuerdame);
     router.push(me.rol === "tecnico" ? "/tecnico" : "/administrator");
     router.refresh();
   }
@@ -121,13 +142,13 @@ export default function AdminLoginPage() {
   async function conGoogle() {
     setError("");
     setLoading("google");
+    guardarPreferencias(email, recuerdame);
     const sb = getSupabaseBrowserClient({ persistSession: recuerdame });
     if (!sb) {
       setLoading(null);
       setError("Falta Supabase.");
       return;
     }
-    guardarPreferencias(email, recuerdame);
     const { error: err } = await sb.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -149,14 +170,15 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Image
-            src="/images/logo.png"
-            alt="Neotérmica"
-            width={160}
-            height={48}
-            className="mx-auto h-12 w-auto"
+            src="/favicon.png"
+            alt=""
+            width={56}
+            height={56}
+            className="mx-auto h-14 w-14 rounded-2xl"
             priority
           />
-          <p className="mt-3 text-sm text-white/70">Panel de administración</p>
+          <p className="mt-3 font-display text-2xl font-bold text-white">Neotérmica</p>
+          <p className="mt-1 text-sm text-white/70">Panel de administración</p>
         </div>
 
         <div className="rounded-2xl bg-white p-8 shadow-2xl">
