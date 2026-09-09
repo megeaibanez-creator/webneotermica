@@ -127,6 +127,7 @@ Fotos de oficio (one-off): `node scripts/generate-servicio-fotos.mjs`.
 ## Reglas que no se improvisan
 
 - **Sin calle ni NIF** inventados. NAP = teléfono + mail + Murcia (`src/lib/site.ts`).
+- **Oferta de empleo (`/oferta-empleo`):** Marcado `JobPosting` validado en Google Search Console (**1 elemento válido** verde). Los 3 avisos opcionales (`baseSalary`, `streetAddress`, `postalCode`) se omiten a propósito: José Carlos no publica sueldos (Google penaliza si el JSON-LD pone sueldo que no está en el HTML) y los trabajos son a domicilio/obra sin oficina fija de atención (el schema lleva `addressLocality: Murcia` y `addressRegion: Región de Murcia`). Puesto concreto de oficio con `directApply: true`.
 - **Sin landings** `/servicios/{pueblo}/…`. Radio 50 km en copy, mapa y GBP.
 - Calculadora: los % de `src/components/home/Calculadora.tsx` son **provisionales**. Preguntar a José Carlos (lista en RAID, 31 ago).
 - Leaflet en Next 16: el mapa se importa en un cliente; `useEffect` con `cancelado` + `map.remove()`. No `next/dynamic` + `ssr: false`.
