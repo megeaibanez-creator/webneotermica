@@ -72,7 +72,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/oferta-empleo" className="hover:text-white">
-                  ¿Quieres trabajar con nosotros?
+                  Trabaja con nosotros
                 </Link>
               </li>
               <li>{EMPRESA.horario}</li>
