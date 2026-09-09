@@ -46,16 +46,30 @@ function gmailConPuntos(email: string): boolean {
   return (local.match(/\./g) ?? []).length >= 4;
 }
 
-/** Pitch copywriter/Calendly (Hannah Melotto) y guest-post / backlinks. */
+/** Pitch copywriter/Calendly, guest-post / backlinks y venta fría B2B (Savin Kumar / FactuON). */
 function parecePitchMarketing(message: string): boolean {
   const m = message.toLowerCase();
-  const writer =
-    m.includes("calendly.com") &&
-    /freelance writer|writing projects|thought leadership|press releases/.test(m);
-  if (writer) return true;
-  return /guest posts?|link building|backlinks?|dofollow|do-follow|write for (us|your website)|sponsored post/.test(
-    m
-  );
+  if (m.includes("calendly.com")) return true;
+  if (/freelance writer|writing projects|thought leadership|press releases/.test(m)) {
+    return true;
+  }
+  if (
+    /guest posts?|link building|backlinks?|dofollow|do-follow|write for (us|your website)|sponsored post/.test(
+      m
+    )
+  ) {
+    return true;
+  }
+  if (/prueba gratuita|tarjeta bancaria|demo r[aá]pida|agend(ar|a) (una )?demo/.test(m)) {
+    return true;
+  }
+  if (/desde\s+\d+([.,]\d+)?\s*€\s*\/\s*(mes|factura|año|empleado|usuario)/.test(m)) {
+    return true;
+  }
+  const links = m.match(/https?:\/\/[^\s]+/g) ?? [];
+  if (links.length >= 2) return true;
+  if (links.some((l) => /pricing|demo|youtube\.com|youtu\.be|bit\.ly/.test(l))) return true;
+  return false;
 }
 
 export function detectarSpam(input: SpamInput): { spam: boolean; motivo?: string } {
@@ -83,7 +97,7 @@ export function detectarSpam(input: SpamInput): { spam: boolean; motivo?: string
   }
 
   const enlaces = (input.message.match(/https?:\/\//g) ?? []).length;
-  if (enlaces >= 3) return { spam: true, motivo: "exceso_enlaces" };
+  if (enlaces >= 2) return { spam: true, motivo: "exceso_enlaces" };
 
   return { spam: false };
 }
