@@ -133,6 +133,7 @@ Fotos de oficio (one-off): `node scripts/generate-servicio-fotos.mjs`.
 - Leaflet en Next 16: el mapa se importa en un cliente; `useEffect` con `cancelado` + `map.remove()`. No `next/dynamic` + `ssr: false`.
 - No borrar chat de visitante. Solo `tester_*` / IDs que liste Narciso.
 - El formulario **no** admite fotos. El chat no las pide. **Más adelante** (Narciso, 31 ago): adjunto en el lead si se encarga. Hoy José Carlos las ve en la visita.
+- **Anti-spam** (`src/lib/spam.ts`, 9 sep `833626d`): honeypot `website` + `fax`, tiempo, tokens, Gmail con puntos y pitch de venta B2B (Calendly, demos, `/pricing`, umbral **2** enlaces). Vale para `/contacto` y `/oferta-empleo`. El bot recibe `{ ok: true }` y no hay mail.
 - Revisor 10/5/0: si hay mejorable o incorrecta, se arregla Nora **en el mismo turno** (prompt / fallback / RAG). El informe solo no cierra.
 
 ---
