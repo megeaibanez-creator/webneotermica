@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 export default function ContactoPage() {
   return (
     <>
-      <header className="pb-10 pt-[calc(74px+4.5rem)]">
+      <header className="pb-8 pt-[calc(74px+4.5rem)]">
         <div className="container-site">
           <p className="eyebrow">Hablemos</p>
           <h1 className="mb-4 text-[clamp(2rem,4.5vw,3.2rem)]">Puedes contactarnos</h1>
@@ -32,39 +32,35 @@ export default function ContactoPage() {
             Cuéntanos qué necesitas y te damos una respuesta clara: si hace falta
             visita o qué presupuesto tiene sentido.
           </p>
-          <p className="lead mt-4">
-            ¿Quieres trabajar con nosotros? No uses este formulario:{" "}
-            <Link
-              href="/oferta-empleo#formulario"
-              className="font-semibold text-brand hover:text-accent"
-            >
-              hay uno específico para la oferta de empleo
-            </Link>
-            .
-          </p>
         </div>
       </header>
 
       <section className="pb-16">
-        <div className="container-site grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
-          <div>
-            <ContactInfo />
-          </div>
-          <div>
-            <aside className="mb-6 rounded-[20px] border border-line bg-soft p-6">
+        <div className="container-site">
+          <aside className="mb-10 flex flex-col gap-5 rounded-[20px] border border-line bg-soft p-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-7">
+            <div className="min-w-0">
               <p className="eyebrow">Oferta de empleo</p>
               <p className="mb-2 font-display text-[1.2rem] font-bold">
                 ¿Quieres trabajar con nosotros?
               </p>
-              <p className="mb-5 text-[0.95rem] text-mutedink">
+              <p className="text-[0.95rem] text-mutedink">
                 Este formulario es para clientes: presupuesto e instalación. Si
                 buscas empleo, rellena el otro, el específico de la oferta
                 (formación, experiencia y edad).
               </p>
-              <Link href="/oferta-empleo#formulario" className="btn-primary">
-                Ir al formulario de empleo
-              </Link>
-            </aside>
+            </div>
+            <Link
+              href="/oferta-empleo#formulario"
+              className="btn-primary shrink-0 self-start sm:self-center"
+            >
+              Ir al formulario de empleo
+            </Link>
+          </aside>
+
+          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+            <div>
+              <ContactInfo />
+            </div>
             <ContactForm />
           </div>
         </div>
