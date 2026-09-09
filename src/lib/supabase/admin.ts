@@ -6,6 +6,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * Devuelve null si el proyecto Supabase todavía no está configurado.
  */
 export function getSupabaseAdmin(): SupabaseClient | null {
+  if (process.env.NODE_ENV === "development") {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) return null;
