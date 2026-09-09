@@ -89,6 +89,7 @@ export function jobPostingJsonLd() {
     jobLocationType: "ON_SITE",
     directApply: true,
     url: `${SITE_URL}/oferta-empleo`,
+    image: `${SITE_URL}/images/hero-empleo.jpg`,
   };
 }
 

@@ -16,6 +16,7 @@
  * servicio-radiadores.jpg   · radiadores de panel en vivienda (IA, 31 ago)
  * servicio-ventilacion.jpg  · agujero en techo (no usar)
  * servicio-ventilacion-v2.jpg · campana de cocina (IA)
+ * hero-empleo.jpg               · dos instaladores al final de un AA (IA, 9 sep)
  */
 
 const REMOTE = false;
@@ -37,6 +38,7 @@ export const IMG = {
   sueloRadiante: img("servicio-suelo-radiante.jpg"),
   radiadores: img("servicio-radiadores.jpg"),
   ventilacion: img("servicio-ventilacion-v2.jpg"),
+  heroEmpleo: img("hero-empleo.jpg"),
 } as const;
 
 export const MARCAS = [

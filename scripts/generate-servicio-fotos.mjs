@@ -46,6 +46,10 @@ const TRABAJOS = [
     file: "servicio-ventilacion-v2.jpg",
     prompt: `${COMUN} Single photograph, one scene only, no split-screen. Eye-level, SUBJECT in the CENTER of the frame: a stainless-steel kitchen extraction hood (campana) over a cooking island or range in a Spanish home or small restaurant kitchen. Photogenic finished room, warm light. This is extraction / ventilation. NOT a circular ceiling valve, NOT looking up at a hole in the ceiling, NOT a doorway shot, NOT linear AC slots, NOT exposed ducts, NOT an octopus of pipes.`,
   },
+  {
+    file: "hero-empleo.jpg",
+    prompt: `${COMUN} Single photograph, one scene only, no split-screen, no collage. Late afternoon after a long air-conditioning install. Two male HVAC coworkers in their 30s–40s, matching navy work polos and work trousers, dusty with fine plaster, no logos on clothing. They sit or lean on the low terrace wall of a Spanish house: one drinks water from a plastic bottle, the other wipes his hands on a rag and looks at the newly mounted outdoor split condenser behind them (copper pipes insulated, job just finished). Tired, quiet satisfaction, not posing, not smiling at camera, not looking at camera, not a handshake, not a catalogue hero. Tools half packed. Real skin, real fabric, real metal. Mediterranean late light, not sunset filter.`,
+  },
 ];
 
 const outDir = path.join(root, "public", "images");

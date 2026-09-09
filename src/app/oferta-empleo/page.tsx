@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import JobForm from "@/components/forms/JobForm";
 import { EMPLEO_FAQS } from "@/lib/empleo";
+import { IMG } from "@/lib/images";
 import { breadcrumbEmpleoJsonLd, jobPostingJsonLd } from "@/lib/structuredData";
 
 const TITLE = "Oferta de empleo: instalador de aire acondicionado en Murcia";
@@ -20,6 +22,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_ES",
     siteName: "Neotérmica",
+    images: [
+      {
+        url: IMG.heroEmpleo,
+        alt: "Dos instaladores de climatización al final de una obra de aire acondicionado",
+      },
+    ],
   },
 };
 
@@ -56,31 +64,43 @@ export default function OfertaEmpleoPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbEmpleoJsonLd()) }}
       />
 
-      <header className="pb-10 pt-[calc(74px+4.5rem)]">
-        <div className="container-site">
-          <nav aria-label="Migas" className="mb-4 text-[0.8rem] text-mutedink">
-            <Link href="/" className="hover:text-brand">
-              Inicio
-            </Link>{" "}
-            · <span>Oferta de empleo</span>
-          </nav>
-          <p className="eyebrow">Trabajo en climatización</p>
-          <h1 className="mb-4 text-[clamp(2rem,4.5vw,3.2rem)]">
-            Oferta de empleo: instalador de aire acondicionado en Murcia
-          </h1>
-          <p className="lead mb-4">
-            ¿Quieres trabajar con nosotros? Neotérmica busca gente de oficio para
-            instalación y reparación de aire acondicionado y climatización en Murcia
-            capital, pedanías y un radio de unos 50 km.
-          </p>
-          <p className="lead mb-7">
-            No es una bolsa genérica: es una plaza de taller. Cuéntanos formación,
-            años de experiencia y edad. José Carlos revisa las solicitudes y llama
-            si encaja.
-          </p>
-          <Link href="#formulario" className="btn-primary">
-            Quiero trabajar con vosotros
-          </Link>
+      <header className="pb-12 pt-[calc(74px+4.5rem)]">
+        <div className="container-site grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <nav aria-label="Migas" className="mb-4 text-[0.8rem] text-mutedink">
+              <Link href="/" className="hover:text-brand">
+                Inicio
+              </Link>{" "}
+              · <span>Oferta de empleo</span>
+            </nav>
+            <p className="eyebrow">Trabajo en climatización</p>
+            <h1 className="mb-4 text-[clamp(2rem,4.5vw,3.2rem)]">
+              Oferta de empleo: instalador de aire acondicionado en Murcia
+            </h1>
+            <p className="lead mb-4">
+              ¿Quieres trabajar con nosotros? Neotérmica busca gente de oficio para
+              instalación y reparación de aire acondicionado y climatización en Murcia
+              capital, pedanías y un radio de unos 50 km.
+            </p>
+            <p className="lead mb-7">
+              No es una bolsa genérica: es una plaza de taller. Cuéntanos formación,
+              años de experiencia y edad. José Carlos revisa las solicitudes y llama
+              si encaja.
+            </p>
+            <Link href="#formulario" className="btn-primary">
+              Quiero trabajar con vosotros
+            </Link>
+          </div>
+          <div className="relative min-h-[300px] overflow-hidden rounded-[28px] shadow-deep lg:min-h-[400px]">
+            <Image
+              src={IMG.heroEmpleo}
+              alt="Dos instaladores de climatización, uniformados, al final de una instalación de aire acondicionado"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+              priority
+            />
+          </div>
         </div>
       </header>
 

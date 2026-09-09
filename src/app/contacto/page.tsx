@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ContactForm from "@/components/forms/ContactForm";
 import ContactInfo from "@/components/contacto/ContactInfo";
 import MapaCobertura from "@/components/MapaCobertura";
@@ -31,6 +32,16 @@ export default function ContactoPage() {
             Cuéntanos qué necesitas y te damos una respuesta clara: si hace falta
             visita o qué presupuesto tiene sentido.
           </p>
+          <p className="lead mt-4">
+            ¿Quieres trabajar con nosotros? No uses este formulario:{" "}
+            <Link
+              href="/oferta-empleo#formulario"
+              className="font-semibold text-brand hover:text-accent"
+            >
+              hay uno específico para la oferta de empleo
+            </Link>
+            .
+          </p>
         </div>
       </header>
 
@@ -39,7 +50,23 @@ export default function ContactoPage() {
           <div>
             <ContactInfo />
           </div>
-          <ContactForm />
+          <div>
+            <aside className="mb-6 rounded-[20px] border border-line bg-soft p-6">
+              <p className="eyebrow">Oferta de empleo</p>
+              <p className="mb-2 font-display text-[1.2rem] font-bold">
+                ¿Quieres trabajar con nosotros?
+              </p>
+              <p className="mb-5 text-[0.95rem] text-mutedink">
+                Este formulario es para clientes: presupuesto e instalación. Si
+                buscas empleo, rellena el otro, el específico de la oferta
+                (formación, experiencia y edad).
+              </p>
+              <Link href="/oferta-empleo#formulario" className="btn-primary">
+                Ir al formulario de empleo
+              </Link>
+            </aside>
+            <ContactForm />
+          </div>
         </div>
       </section>
 
