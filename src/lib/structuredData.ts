@@ -68,10 +68,10 @@ export function jobPostingJsonLd() {
     validThrough: "2027-03-09",
     employmentType: "FULL_TIME",
     hiringOrganization: {
-      "@type": "HVACBusiness",
-      "@id": `${SITE_URL}/#organizacion`,
+      "@type": "Organization",
       name: EMPRESA.nombre,
       sameAs: SITE_URL,
+      logo: `${SITE_URL}/images/logo.png`,
     },
     jobLocation: {
       "@type": "Place",
@@ -82,11 +82,6 @@ export function jobPostingJsonLd() {
         addressCountry: "ES",
       },
     },
-    applicantLocationRequirements: {
-      "@type": "Country",
-      name: "España",
-    },
-    jobLocationType: "ON_SITE",
     directApply: true,
     url: `${SITE_URL}/oferta-empleo`,
     image: `${SITE_URL}/images/hero-empleo.jpg`,

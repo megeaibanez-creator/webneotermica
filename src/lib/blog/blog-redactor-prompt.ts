@@ -14,6 +14,7 @@ export const NEOTERMICA_INTERNAL_LINKS: { href: string; ancla: string }[] = [
   { href: "/servicios/reparacion-mantenimiento", ancla: "reparación y mantenimiento" },
   { href: "/contacto#formulario", ancla: "pedir presupuesto" },
   { href: "/estancias", ancla: "recorrido por estancias" },
+  { href: "/oferta-empleo", ancla: "oferta de empleo de instalador" },
   { href: "/blog", ancla: "el blog" },
 ];
 

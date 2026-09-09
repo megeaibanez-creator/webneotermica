@@ -25,9 +25,18 @@ export const metadata: Metadata = {
     images: [
       {
         url: IMG.heroEmpleo,
+        width: 1536,
+        height: 1024,
         alt: "Dos instaladores de climatización al final de una obra de aire acondicionado",
+        type: "image/jpeg",
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${TITLE} | Neotérmica`,
+    description: DESCRIPTION,
+    images: [IMG.heroEmpleo],
   },
 };
 
