@@ -156,7 +156,11 @@ export default function AdminContactosPage() {
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     return leads.filter((l) => {
-      if (filtro && l.status !== filtro) return false;
+      if (filtro) {
+        if (l.status !== filtro) return false;
+      } else if (l.status === "spam") {
+        return false;
+      }
       if (!q) return true;
       return [l.name, l.email, l.phone, l.company, l.municipio, l.service_interest, l.message]
         .join(" ")
@@ -253,13 +257,14 @@ export default function AdminContactosPage() {
     <div className="admin-shell">
       <h1 className="mb-2 text-3xl">Contactos</h1>
       <p className="mb-5 text-mutedink">
-        Leads de /contacto. Si contratan, pásalos a Clientes. No se borra ninguno desde aquí.
+        Leads de /contacto. Si contratan, pásalos a Clientes. El spam no sale en
+        Todos (pestaña Spam). No se borra ninguno desde aquí.
       </p>
       {error && <p className="mb-4 text-accent">{error}</p>}
 
       <div className="mb-5 flex flex-wrap gap-2">
         <AdminChip activo={filtro === ""} onClick={() => setFiltro("")}>
-          Todos · {leads.length}
+          Todos · {leads.filter((l) => l.status !== "spam").length}
         </AdminChip>
         {ESTADOS.map((e) => (
           <AdminChip key={e.value} activo={filtro === e.value} onClick={() => setFiltro(e.value)}>

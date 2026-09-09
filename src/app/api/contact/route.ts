@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 type Body = Partial<Lead> & {
   gdpr_consent?: boolean;
   website?: string;
+  fax?: string;
   form_started_at?: number;
 };
 
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
     email: lead.email,
     message: lead.message,
     website: String(body.website ?? ""),
+    fax: String(body.fax ?? ""),
     form_started_at: Number(body.form_started_at ?? 0),
   });
 

@@ -109,6 +109,7 @@ export async function GET() {
       supabase
         .from("contact_submissions")
         .select("id,created_at,name,status,service_interest,municipio,is_read")
+        .neq("status", "spam")
         .order("created_at", { ascending: false })
         .limit(6),
       supabase
@@ -219,7 +220,10 @@ export async function GET() {
       sin_texto: publicados.filter((p) => !p.reescrito).length,
     },
     recientes: {
-      leads: [...leads].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6),
+      leads: [...leads]
+        .filter((l) => l.status !== "spam")
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .slice(0, 6),
       preguntas: [...preguntas]
         .sort((a, b) => b.created_at.localeCompare(a.created_at))
         .slice(0, 6)

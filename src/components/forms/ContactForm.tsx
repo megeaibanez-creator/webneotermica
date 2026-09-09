@@ -26,7 +26,7 @@ const PRESUPUESTOS = [
 
 /**
  * Formulario de contacto (molde Eskala/Tricholand).
- * Anti-spam silencioso: honeypot `website` + tiempo mínimo de relleno.
+ * Anti-spam silencioso: honeypot `website` + `fax` + tiempo mínimo de relleno.
  * El visitante nunca ve un captcha.
  */
 export default function ContactForm({ compact = false }: { compact?: boolean }) {
@@ -54,6 +54,7 @@ export default function ContactForm({ compact = false }: { compact?: boolean }) 
       message: String(fd.get("message") ?? ""),
       gdpr_consent: fd.get("gdpr_consent") === "on",
       website: String(fd.get("website") ?? ""),
+      fax: String(fd.get("fax") ?? ""),
       form_started_at: startedAt.current,
     };
 
@@ -110,6 +111,8 @@ export default function ContactForm({ compact = false }: { compact?: boolean }) 
           tabIndex={-1}
           autoComplete="off"
         />
+        <label htmlFor="fax">Fax</label>
+        <input id="fax" type="text" name="fax" tabIndex={-1} autoComplete="off" />
       </div>
 
       <fieldset className="mb-4">
