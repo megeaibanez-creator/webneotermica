@@ -163,26 +163,33 @@ export default function AdminCandidatosPage() {
       titulo: "Nombre",
       ordenable: true,
       valor: (l) => l.name,
+      celda: (l) => (
+        <span className={l.is_read ? "font-medium" : "font-semibold"}>{l.name}</span>
+      ),
     },
     {
       id: "phone",
       titulo: "Teléfono",
       valor: (l) => l.phone ?? "",
+      celda: (l) => l.phone ?? "—",
     },
     {
       id: "puesto",
       titulo: "Puesto",
       valor: (l) => l.puesto ?? "",
+      celda: (l) => l.puesto || "—",
     },
     {
       id: "experiencia",
       titulo: "Experiencia",
       valor: (l) => l.experiencia ?? "",
+      celda: (l) => l.experiencia || "—",
     },
     {
       id: "edad",
       titulo: "Edad",
       valor: (l) => l.edad ?? "",
+      celda: (l) => l.edad || "—",
     },
     {
       id: "status",
