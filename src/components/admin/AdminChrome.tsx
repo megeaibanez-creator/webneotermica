@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Briefcase,
   CalendarCheck,
   CalendarDays,
   ExternalLink,
@@ -32,6 +33,7 @@ const NAV_ADMIN: ItemNav[] = [
   { href: "/administrator/blog", label: "Blog", icon: FileText },
   { href: "/administrator/clientes", label: "Clientes", icon: UserRound },
   { href: "/administrator/contactos", label: "Contactos", icon: Users },
+  { href: "/administrator/candidatos", label: "Candidatos", icon: Briefcase },
   { href: "/administrator/proyectos", label: "Proyectos", icon: FolderKanban },
   { href: "/administrator/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/administrator/presupuestos", label: "Presupuestos", icon: ScrollText },

@@ -6,14 +6,14 @@ import { EMPRESA } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Política de privacidad",
   description:
-    "Cómo trata Neotérmica Climatización los datos personales que se envían por el formulario de contacto o por el asistente de la web.",
+    "Cómo trata Neotérmica Climatización los datos personales que se envían por el formulario de contacto, el de empleo o el asistente de la web.",
   robots: { index: false, follow: true },
   alternates: { canonical: "/politica-de-privacidad" },
 };
 
 export default function PrivacidadPage() {
   return (
-    <LegalPage titulo="Política de privacidad">
+    <LegalPage titulo="Política de privacidad" actualizado="9 de septiembre de 2026">
       <p>
         Esta política explica qué datos personales tratamos, para qué y durante cuánto
         tiempo, conforme al Reglamento (UE) 2016/679 (RGPD) y a la Ley Orgánica 3/2018
@@ -34,6 +34,11 @@ export default function PrivacidadPage() {
           empresa, municipio, servicio de interés, cómo nos has conocido y el mensaje.
         </li>
         <li>
+          <b>Formulario de empleo:</b> nombre, teléfono, email, municipio, puesto,
+          formación, años de experiencia, edad y, si los indicas, carnet, disponibilidad
+          y un breve texto sobre tu oficio. Solo para valorar la candidatura.
+        </li>
+        <li>
           <b>Asistente de la web:</b> las preguntas y respuestas de la conversación, con
           un identificador de sesión. No pedimos datos identificativos en el chat.
         </li>
@@ -46,6 +51,7 @@ export default function PrivacidadPage() {
       <h2>Para qué</h2>
       <ul>
         <li>Responder a tu consulta y preparar un presupuesto.</li>
+        <li>Valorar una candidatura si usas el formulario de oferta de empleo.</li>
         <li>Gestionar la relación como cliente si el trabajo se contrata.</li>
         <li>Mejorar la web y el asistente a partir de conversaciones anónimas.</li>
       </ul>

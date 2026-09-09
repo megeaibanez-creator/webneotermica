@@ -57,6 +57,57 @@ export function serviceJsonLd(servicio: Servicio) {
   };
 }
 
+export function jobPostingJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: "Instalador de aire acondicionado en Murcia",
+    description:
+      "Oferta de empleo en Neotérmica: instalación y reparación de aire acondicionado y climatización en Murcia y unos 50 km. Formación de oficio, experiencia valorada. Apúntate en el formulario.",
+    datePosted: "2026-09-09",
+    validThrough: "2027-03-09",
+    employmentType: "FULL_TIME",
+    hiringOrganization: {
+      "@type": "HVACBusiness",
+      "@id": `${SITE_URL}/#organizacion`,
+      name: EMPRESA.nombre,
+      sameAs: SITE_URL,
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Murcia",
+        addressRegion: "Región de Murcia",
+        addressCountry: "ES",
+      },
+    },
+    applicantLocationRequirements: {
+      "@type": "Country",
+      name: "España",
+    },
+    jobLocationType: "ON_SITE",
+    directApply: true,
+    url: `${SITE_URL}/oferta-empleo`,
+  };
+}
+
+export function breadcrumbEmpleoJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Oferta de empleo",
+        item: `${SITE_URL}/oferta-empleo`,
+      },
+    ],
+  };
+}
+
 export function breadcrumbServicioJsonLd(servicio: Servicio) {
   return {
     "@context": "https://schema.org",

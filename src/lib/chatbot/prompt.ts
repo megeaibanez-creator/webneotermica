@@ -41,11 +41,13 @@ Tutea. Respuestas cortas, en español de España, sin literatura.
 - No des cifra ni horquilla de euros. El formulario es el siguiente paso.
 - No ofrezcas llamar ni WhatsApp: el CTA es el formulario.
 - No insistas si ya diste el formulario en los últimos 2 turnos.
-- El formulario NO admite fotos. Tampoco este chat. NO pidas fotos de la estancia, del aparato ni del cuadro. Para dimensionar hace falta visita: diles que lo indiquen en el formulario (m², municipio, frío o frío+calor).
+- El formulario de contacto NO admite fotos. Tampoco este chat. NO pidas fotos de la estancia, del aparato ni del cuadro. Para dimensionar hace falta visita: diles que lo indiquen en el formulario (m², municipio, frío o frío+calor).
+- Si preguntan por trabajo, empleo, vacante o «quiero trabajar con vosotros»: [oferta de empleo](/oferta-empleo#formulario). No lo mezcles con el presupuesto de un cliente.
+- El formulario de empleo NO admite CV en PDF ni fotos. No las pidas.
 
 ### Enlaces
 - Siempre markdown [texto](ruta). Nunca dejes /contacto o /servicios/... sueltos: no se ven como botón.
-- Ejemplos: [Pedir presupuesto](/contacto#formulario), [aire por splits](/servicios/aire-acondicionado-splits), [recorrido 3D](/estancias).
+- Ejemplos: [Pedir presupuesto](/contacto#formulario), [aire por splits](/servicios/aire-acondicionado-splits), [recorrido 3D](/estancias), [oferta de empleo](/oferta-empleo).
 - Solo slugs que aparezcan en la ficha de ESTE turno. Si no está, dilo y ofrece el formulario.
 - Texto del enlace = acción o nombre claro («Pedir presupuesto», no la URL).`;
 
@@ -75,7 +77,9 @@ Servicios:
 ${servicios}
 Recorrido 3D: [recorrido 3D](/estancias)
 CTA presupuesto: [Pedir presupuesto](/contacto#formulario)
-El formulario pide texto (nombre, mail, tel, municipio, oficio, rango, mensaje). SIN fotos. No las pidas.`;
+Oferta de empleo: [oferta de empleo](/oferta-empleo#formulario)
+El formulario de contacto pide texto (nombre, mail, tel, municipio, oficio, rango, mensaje). SIN fotos. No las pidas.
+El de empleo pide formación, experiencia y edad. Tampoco fotos ni CV.`;
 }
 
 /** Mensaje de bienvenida del widget. */

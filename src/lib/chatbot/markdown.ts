@@ -68,11 +68,12 @@ export function renderChatMarkdown(text: string): string {
 export const aHtml = renderChatMarkdown;
 
 const RUTA_INTERNA =
-  /(?<![">\w])(\/(?:contacto|servicios|blog|estancias|aviso-legal|politica-de-privacidad|politica-de-cookies|accesibilidad)(?:\/[a-z0-9\-]+)*(?:#[a-z0-9\-]+)?)(?=[\s.,;:!?)<]|$)/gi;
+  /(?<![">\w])(\/(?:contacto|servicios|blog|estancias|oferta-empleo|aviso-legal|politica-de-privacidad|politica-de-cookies|accesibilidad)(?:\/[a-z0-9\-]+)*(?:#[a-z0-9\-]+)?)(?=[\s.,;:!?)<]|$)/gi;
 
 function etiquetaRuta(href: string): string {
   const [path, hash] = href.split("#");
   if (path === "/contacto") return hash === "formulario" ? "Pedir presupuesto" : "contacto";
+  if (path === "/oferta-empleo") return "oferta de empleo";
   if (path === "/estancias") return "recorrido 3D";
   if (path === "/blog") return "blog";
   if (path === "/servicios") return "servicios";

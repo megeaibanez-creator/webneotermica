@@ -29,7 +29,8 @@ export type Tabla =
   | "invoices"
   | "profiles"
   | "actuaciones"
-  | "actuacion_responsables";
+  | "actuacion_responsables"
+  | "job_applications";
 
 /** Solo en desarrollo y solo si Supabase no está configurado. */
 export function localDbActivo(): boolean {

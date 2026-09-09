@@ -33,6 +33,7 @@ En Windows, si `fetch` a OpenAI o Supabase falla por TLS (proxy Acttax): la mism
 | `/estancias` | Recorrido 3D. |
 | `/blog` + `/blog/{slug}` | Tabla `blog_articles`. Texto: `redact:blog`. Portada: URL de Storage, no un JPG en el repo. Molde: comercios. |
 | `/contacto` | Formulario (`#formulario`) + mapa. El form **no** va en la home. |
+| `/oferta-empleo` | Oferta de empleo (instalador AA Murcia). Form de candidatos → `job_applications`. Admin `/administrator/candidatos`. |
 | `/aviso-legal`, `/politica-de-privacidad`, `/politica-de-cookies`, `/accesibilidad` | Legal. |
 | `/administrator` | Taller (rol **admin**): panel, blog, clientes, contactos, proyectos, **agenda**, presupuestos, facturación, **equipo**, chat. Auth: `megeaibanez@gmail.com`. |
 | `/administrator/agenda` | Calendario mensual de actuaciones. Filtro por técnico (color por persona). Alta/edición en hoja lateral. `?obra=ID` abre el editor con la obra ya elegida. |
@@ -56,6 +57,7 @@ rellena el form →  Lead (consulta) → Cliente real    → Obra (project)     
 ```
 
 1. **Lead** (`contact_submissions`): cualquiera que rellena `/contacto`. Solo una consulta. Se gestiona en `/administrator/contactos` y **no se borra**.
+1b. **Candidato** (`job_applications`): `/oferta-empleo`. No se mezcla con Contactos. Panel `/administrator/candidatos`.
 2. **Pasar a cliente**: botón en la ficha del lead (`pasarACliente`, `src/app/administrator/contactos/page.tsx` → `POST /api/admin/crm` con `from_lead_id`). Copia nombre/mail/tel/municipio y enlaza `lead_id ↔ client_id`. Marca el lead como `replied`.
 3. **Obra** (`projects`): se crea dentro de la ficha del cliente (o en `/administrator/proyectos`). Datos de oficio: título, servicio, municipio, m², notas. El importe es interno y **no** sale a la calle.
 4. **Fotos**: en la misma ficha, mientras avanza el trabajo (fases antes / durante / después). Van a Storage `blog/proyectos/{id}/`.

@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 /**
- * Solo lo indexable: home, hub, 8 landings, blog y sus posts publicados, contacto.
+ * Solo lo indexable: home, hub, 8 landings, blog y sus posts publicados, contacto, oferta de empleo.
  * Fuera: /administrator, /api y las páginas legales (noindex).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -31,6 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: hoy,
       changeFrequency: "yearly",
       priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/oferta-empleo`,
+      lastModified: hoy,
+      changeFrequency: "monthly",
+      priority: 0.7,
     },
     {
       url: `${SITE_URL}/blog`,

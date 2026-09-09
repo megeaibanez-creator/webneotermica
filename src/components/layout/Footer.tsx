@@ -70,6 +70,11 @@ export default function Footer() {
                   Pedir presupuesto
                 </Link>
               </li>
+              <li>
+                <Link href="/oferta-empleo" className="hover:text-white">
+                  ¿Quieres trabajar con nosotros?
+                </Link>
+              </li>
               <li>{EMPRESA.horario}</li>
             </ul>
           </div>

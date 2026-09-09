@@ -130,6 +130,113 @@ export function smtpConfigurado(): boolean {
   );
 }
 
+export type Candidato = {
+  name: string;
+  email: string;
+  phone: string;
+  municipio: string;
+  puesto: string;
+  formacion: string;
+  experiencia: string;
+  edad: string;
+  carnet: string;
+  disponibilidad: string;
+  message: string;
+};
+
+export function plantillaAvisoEmpleo(c: Candidato): { subject: string; html: string } {
+  const cuerpo = `
+    <h1 style="margin:0 0 6px;font-size:20px;color:${INK}">Candidatura desde la web</h1>
+    <p style="margin:0 0 18px;font-size:14px;color:#5c6b7a">Oferta de empleo${
+      c.puesto ? ` · ${esc(c.puesto)}` : ""
+    }</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${fila("Nombre", c.name)}
+      ${fila("Teléfono", c.phone)}
+      ${fila("Email", c.email)}
+      ${fila("Municipio", c.municipio)}
+      ${fila("Puesto", c.puesto)}
+      ${fila("Formación", c.formacion)}
+      ${fila("Experiencia", c.experiencia)}
+      ${fila("Edad", c.edad)}
+      ${fila("Carnet B", c.carnet)}
+      ${fila("Disponibilidad", c.disponibilidad)}
+    </table>
+    ${
+      c.message
+        ? `<p style="margin:18px 0 6px;font-size:13px;color:#5c6b7a">Qué ha hecho</p>
+           <div style="padding:14px;background:#f5f8fb;border-left:3px solid ${CRIMSON};font-size:14px;white-space:pre-wrap">${esc(
+             c.message
+           )}</div>`
+        : ""
+    }
+    <p style="margin:22px 0 0;font-size:13px">
+      <a href="tel:${esc(c.phone)}" style="color:${CRIMSON};font-weight:bold">Llamar</a> ·
+      <a href="mailto:${esc(c.email)}" style="color:${SLATE};font-weight:bold">Responder</a> ·
+      <a href="${SITE_URL}/administrator/candidatos" style="color:${SLATE}">Ver en el panel</a>
+    </p>`;
+  return {
+    subject: `Empleo web · ${c.name}${c.puesto ? ` · ${c.puesto}` : ""}`,
+    html: shell("Nueva candidatura", cuerpo),
+  };
+}
+
+export function plantillaConfirmacionEmpleo(c: Candidato): { subject: string; html: string } {
+  const cuerpo = `
+    <h1 style="margin:0 0 12px;font-size:20px;color:${INK}">Hemos recibido tu solicitud</h1>
+    <p style="margin:0 0 14px;font-size:14px;line-height:1.6">Hola ${esc(
+      c.name.split(" ")[0] ?? c.name
+    )}, hemos apuntado tu candidatura para trabajar en Neotérmica. Si encaja con lo que necesitamos, te llamamos en horario de taller: ${esc(
+      EMPRESA.horario
+    )}.</p>
+    <p style="margin:18px 0 0;font-size:14px;line-height:1.6">Si no era para trabajar, sino para un presupuesto en casa, escríbenos en <a href="${SITE_URL}/contacto#formulario" style="color:${SLATE}">contacto</a>.</p>`;
+  return {
+    subject: "Hemos recibido tu candidatura · Neotérmica",
+    html: shell("Hemos recibido tu candidatura", cuerpo),
+  };
+}
+
+export async function enviarParEmpleo(c: Candidato): Promise<boolean> {
+  if (!smtpConfigurado()) return false;
+
+  const port = Number(process.env.SMTP_PORT ?? 465);
+  const transport = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: port === 465,
+    auth: {
+      user: process.env.SMTP_USER as string,
+      pass: process.env.SMTP_PASS as string,
+    },
+  });
+
+  const from = process.env.SMTP_FROM ?? `Neotérmica <${EMPRESA.email}>`;
+  const aviso = plantillaAvisoEmpleo(c);
+  const confirmacion = plantillaConfirmacionEmpleo(c);
+
+  try {
+    await transport.sendMail({
+      from,
+      to: process.env.MAIL_TO as string,
+      replyTo: c.email,
+      subject: aviso.subject,
+      html: aviso.html,
+    });
+    if (c.email) {
+      await transport.sendMail({
+        from,
+        to: c.email,
+        subject: confirmacion.subject,
+        html: confirmacion.html,
+      });
+    }
+    return true;
+  } catch (error) {
+    console.error("[email] fallo al enviar candidatura:", error);
+    return false;
+  }
+}
+
 /** Envía el par. Devuelve false si no hay SMTP o si falla (sin romper el alta). */
 export async function enviarParDeCorreos(lead: Lead): Promise<boolean> {
   if (!smtpConfigurado()) return false;

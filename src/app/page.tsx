@@ -357,6 +357,31 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="bg-white py-16">
+        <div className="container-site max-w-3xl">
+          <div>
+            <p className="eyebrow">Oferta de empleo</p>
+            <h2 className="h-sec">¿Quieres trabajar con nosotros?</h2>
+            <p className="lead mb-4">
+              Buscamos instalador de aire acondicionado en Murcia: instalación y
+              reparación de climatización a pie de obra. Formación, experiencia y
+              ganas de oficio.
+            </p>
+            <p className="mb-6 text-mutedink">
+              No es el formulario de presupuesto. Si necesitas instalar o reparar en
+              casa, ve a{" "}
+              <Link href="/contacto#formulario" className="font-semibold text-brand hover:text-accent">
+                contacto
+              </Link>
+              .
+            </p>
+            <Link href="/oferta-empleo" className="btn-primary">
+              Ver la oferta de empleo
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {destacados.length > 0 && (
         <section className="bg-soft py-20">
           <div className="container-site">
