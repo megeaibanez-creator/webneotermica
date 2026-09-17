@@ -28,18 +28,41 @@ type ItemNav = {
   exact?: boolean;
 };
 
-const NAV_ADMIN: ItemNav[] = [
-  { href: "/administrator", label: "Panel", icon: LayoutDashboard, exact: true },
-  { href: "/administrator/blog", label: "Blog", icon: FileText },
-  { href: "/administrator/clientes", label: "Clientes", icon: UserRound },
-  { href: "/administrator/contactos", label: "Contactos", icon: Users },
-  { href: "/administrator/candidatos", label: "Candidatos", icon: Briefcase },
-  { href: "/administrator/proyectos", label: "Proyectos", icon: FolderKanban },
-  { href: "/administrator/agenda", label: "Agenda", icon: CalendarDays },
-  { href: "/administrator/presupuestos", label: "Presupuestos", icon: ScrollText },
-  { href: "/administrator/facturacion", label: "Facturación", icon: Receipt },
-  { href: "/administrator/equipo", label: "Equipo", icon: HardHat },
-  { href: "/administrator/chatbot", label: "Chat", icon: MessageSquare },
+type GrupoNav = {
+  titulo: string;
+  items: ItemNav[];
+};
+
+const GRUPOS_ADMIN: GrupoNav[] = [
+  {
+    titulo: "General",
+    items: [
+      { href: "/administrator", label: "Panel", icon: LayoutDashboard, exact: true },
+      { href: "/administrator/blog", label: "Blog", icon: FileText },
+      { href: "/administrator/chatbot", label: "Chat", icon: MessageSquare },
+    ],
+  },
+  {
+    titulo: "Clientes",
+    items: [
+      { href: "/administrator/clientes", label: "Clientes", icon: UserRound },
+      { href: "/administrator/contactos", label: "Contactos", icon: Users },
+      { href: "/administrator/proyectos", label: "Proyectos", icon: FolderKanban },
+      { href: "/administrator/agenda", label: "Agenda", icon: CalendarDays },
+    ],
+  },
+  {
+    titulo: "Gestión",
+    items: [
+      { href: "/administrator/presupuestos", label: "Presupuestos", icon: ScrollText },
+      { href: "/administrator/facturacion", label: "Facturación", icon: Receipt },
+      { href: "/administrator/equipo", label: "Equipo", icon: HardHat },
+    ],
+  },
+  {
+    titulo: "Empleo",
+    items: [{ href: "/administrator/candidatos", label: "Candidatos", icon: Briefcase }],
+  },
 ];
 
 const NAV_TECNICO: ItemNav[] = [
@@ -112,21 +135,23 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {esTecnico && (
-            <p className="px-3 pb-1 pt-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
-              Administración
-            </p>
-          )}
-          {NAV_ADMIN.map(pinta)}
+        <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+          {GRUPOS_ADMIN.map((grupo) => (
+            <div key={grupo.titulo}>
+              <p className="px-3 pb-1 pt-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
+                {grupo.titulo}
+              </p>
+              <div className="space-y-1">{grupo.items.map(pinta)}</div>
+            </div>
+          ))}
 
           {esTecnico && (
-            <>
-              <p className="px-3 pb-1 pt-4 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
+            <div>
+              <p className="px-3 pb-1 pt-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/40">
                 Técnico
               </p>
-              {NAV_TECNICO.map(pinta)}
-            </>
+              <div className="space-y-1">{NAV_TECNICO.map(pinta)}</div>
+            </div>
           )}
         </nav>
 
