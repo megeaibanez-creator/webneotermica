@@ -45,8 +45,8 @@ const GRUPOS_ADMIN: GrupoNav[] = [
   {
     titulo: "Clientes",
     items: [
-      { href: "/administrator/clientes", label: "Clientes", icon: UserRound },
       { href: "/administrator/contactos", label: "Contactos", icon: Users },
+      { href: "/administrator/clientes", label: "Clientes", icon: UserRound },
       { href: "/administrator/proyectos", label: "Proyectos", icon: FolderKanban },
       { href: "/administrator/agenda", label: "Agenda", icon: CalendarDays },
     ],
